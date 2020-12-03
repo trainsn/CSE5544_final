@@ -12,8 +12,8 @@
 		this.maxY = maxY;
 	}
 
-	Envelope.prototype.cotain = function(x, y){
-		return x >= minX && x <= maxX && y >= minY && y <= maxY;
+	Envelope.prototype.cotain = function(point){
+		return point.x >= minX && point.x <= maxX && point.y >= minY && point.y <= maxY;
 	} 
 
 	Envelope.prototype.intersect = function(envelope){
@@ -70,10 +70,10 @@
 		se = new Envelope(tMidX, tMaxX, tMinY, tMidY);
 		ne = new Envelope (tMidX, tMaxX, tMidY, tMaxY);
 
-		this.nodes[0] = new QuadNode(nw);
-		this.nodes[1] = new QuadNode(ne);
-		this.nodes[2] = new QuadNode(se);
-		this.nodes[3] = new QuadNode(sw);
+		this.nodes[0] = new this._classConstructor(nw);
+		this.nodes[1] = new this._classConstructor(ne);
+		this.nodes[2] = new this._classConstructor(se);
+		this.nodes[3] = new this._classConstructor(sw);
 
 		for (var i = 0; i < 4; i++){
 			for (var j = 0; j < this.features.length; j++){
@@ -83,11 +83,33 @@
 			}
 		}
 
-		for (int i = 0; i < 4; i++){
+		for (var i = 0; i < 4; i++){
 			this.nodes[i].split(capacity);
 		}
 
 		this.features.length = 0;
+	}
+
+	QuadNode.prototype.countNode = function(nodeCounter){
+		if (this.isLeafNode()){
+			nodeCounter.leafNum++;
+		} else {
+			nodeCounter.interiorNum++;
+			for (var i = 0; i < 4; i++){
+				this.nodes[i].countNode(nodeCounter);
+			}
+		}
+	}
+
+	QuadNode.prototype.countHeight = function(height){
+		height++;
+		if (!this.isLeafNode()){
+			cur = height;
+			for (var i = 0; i < 4; i++){
+				height = Math.max(height, nodes[i].countHeight(cur))
+			}
+		}
+		return height;
 	}
 
 	QuadNode.prototype.add = function(feat){
@@ -118,7 +140,67 @@
 		return out;
 	} 
 
+	function QuadTree(capacity){
+		this.capacity = capacity;
+	}
 
+	QuadTree.prototype.bbox = null;
+	QuadTree.prototype.root = null;
 
+	QuadTree.prototype.constructQuadTree =  function(features){
+		if (features.length == 0)
+			return false;
+
+		tMinX = features[0].x;
+		tMaxX = features[0].x;
+		tMinY = features[0].y;
+		tMaxY = features[0].y;
+		for (var i = 1; i < features.length; i++){
+			if (features[i].x < tMinX)
+				tMinX = features[i].x;
+			if (features[i].x > tMaxX)
+				tMaxX = features[i].x;
+			if (features[i].y < tMinY)
+				tMinY = features[i].y;
+			if (features[i].y > tMaxY)
+				tMaxY = features[i].y;
+		}
+		this.bbox = new Envelope(tMinX, tMaxX, tMinY, tMaxY);
+		this.root = new QuadTree(bbox);
+		for (var i = 0; i < features.length; i++){
+			if (this.bbox.contain(features[i])){
+				root.add(features[i]);
+			}
+		}
+
+		if (root.features.length > capacity)
+			root.split(capacity);
+
+		return tree;
+	}
+
+	QuadTree.prototype.countQuadNode = function(){
+		nodeCounter = {
+			interiorNum: 0,
+			leafNum: 0;
+		}
+		if (this.root != null){
+			this.root.countQuadNode(nodeCounter);
+		}
+	}
+
+	QuadTree.prototype.countHeight = function(){
+		height = 0;
+		if (this.root != null){
+			height = this.root.countHeight();
+		}
+		return height;
+	}
+
+	QuadTree.prototype.rangeQuery = function(rect){
+		this.root.rangeQuery(rect);
+	}
+
+	window.QuadTree = QuadTree;
 
 }(window));
