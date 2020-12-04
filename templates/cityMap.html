@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <title>New York City Taxi/Bike Trips</title>
+    <!-- <link rel="stylesheet" href="./static/css/custom.css"> -->
+    <link href="{{ url_for('static', filename='css/custom.css') }}" rel="stylesheet">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" type="text/css" />
+    <!-- <link href="{{ url_for('static', filename='css/lightpick.css') }}" rel="stylesheet"> -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/litepicker/dist/css/style.css"/>
+    <link rel="icon" href="data:,">
+</head>
+
+<body class="application">
+    <div class="navbar navbar-inverse navbar-fixed-top">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <a class="navbar-brand" href="./" style="font-family: Times; font-size:20px; text-align:center"> &nbsp; New York City Taxi Trips</a>
+            </div>
+        </div>
+    </div>
+
+    <select id="selectDatasetBtn"></select>
+    <div id="map"></div>
+    <div id='neighborhoodPopover'> </div>
+    
+    <input type="text" id="datepicker" />
+    
+    <!-- <div id="update-nav">
+        <div id="range-selector">
+          <input type="button" id="1m" class="period ui-button" value="1m" />
+          <input type="button" id="3m" class="period ui-button" value="3m"/>
+          <input type="button" id="6m" class="period ui-button" value="6m"/>
+          <input type="button" id="1y" class="period ui-button" value="1y"/>
+          <input type="button" id="all" class="period ui-button" value="All"/>
+        </div>
+        <div id="date-selector" class="">
+            From:<input type="text" id="fromDate"  class="ui-widget">
+            To:<input type="text" id="toDate"  class="ui-widget">
+        </div>
+      </div>
+      <br/> -->
+
+      
+
+<!-- 
+    <div class="col-sm-2"><p id="value-step"></p></div>
+    <div class="col-sm"><div id="slider-step"></div></div>
+
+{#    <div id="sortHM_btn">#}
+{#    <input id="max" type="checkbox" name="sortHM" value="max" />&nbsp;&nbsp;&nbsp;#}
+{#    <input id="avg" type="checkbox" name="sortHM" value="avg" />&nbsp;&nbsp;&nbsp;#}
+{#    <input id="max" type="checkbox" name="sortHM" value="max" />&nbsp;&nbsp;&nbsp;#}
+{#    <input id="avg" type="checkbox" name="sortHM" value="avg" checked/>&nbsp;&nbsp;&nbsp;#}
+{#    <input id="max" type="checkbox" name="sortHM" value="max" checked/>&nbsp;&nbsp;&nbsp;#}
+{#    <input id="avg" type="checkbox" name="sortHM" value="avg" />#}
+{#    </div>#}
+
+{#    <p id="scrool_area1">#}
+{#    <br><br><br><br><br><br><br><br><br>#}
+{#         <br><br><br><br><br><br><br><br><br>#}
+{#         <br><br><br><br><br><br><br><br><br>#}
+{#    </p>#}
+{#<br><br>#}
+{#    <button type="button">Query Channel!</button>#}
+{##}
+{#    <p id="scrool_area2">#}
+{#    <br><br><br><br><br><br><br><br><br>#}
+{#         <br><br><br><br><br><br><br><br><br>#}
+{#         <br><br><br><br><br><br><br><br><br>#}
+{#    </p>#} -->
+
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.2/js/bootstrap.min.js"></script>
+    <script src="https://d3js.org/d3.v4.min.js"></script>
+    <script src="https://d3js.org/queue.v1.min.js"></script>
+    <!-- <script src='https://cdnjs.cloudflare.com/ajax/libs/spin.js/2.0.1/spin.min.js'></script>  -->
+    <!--time picker-->
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.min.js"></script>
+    <script src="{{ url_for('static', filename='lib/js/lightpick.js') }}"></script> -->
+    <script src="https://cdn.jsdelivr.net/npm/litepicker/dist/js/main.js"></script>
+    
+<!--  my scripts -->
+    <!-- <script type="text/javascript", src="./static/js/map.js"></script> -->
+    <script>
+        var geo_nycDataUrl = "{{ url_for('get_nyc_geo_data') }}";
+        var geo_njcDataUrl = "{{ url_for('get_njc_geo_data') }}";
+        var njcBikeDataUrl = "{{ url_for('get_NJC_Bike_data') }}";
+        var nycTaxiDataUrl = "{{ url_for('get_NYC_Taxi_data') }}";
+    </script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/map.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/selection.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/drag_selection.js') }}"></script>
+    <!-- // <script type="text/javascript", src="./static/js/CirclePacking.js"></script> -->
+
+
+
+</body>
+</html>
