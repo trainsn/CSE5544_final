@@ -82,19 +82,32 @@ var margin_sele = {top: 20, right: 30, bottom: 30, left: 10},
     width_sele  = 300 - margin_sele.left - margin_sele.right,
     height_sele = 300 - margin_sele.top - margin_sele.bottom;
 
-var start = new Date(2015, 01, 01); 
-var end = new Date(2015, 05, 01);  
+var start_date = new Date(2013, 01, 01); 
+var end_date = new Date(2013, 01, 05);  
+
+// var allGroup = d3.map(data, function(d){return(d.name)}).keys()
+
+function dateToYMD(date) {
+    var d = date.getDate();
+    var m = date.getMonth() + 1;
+    var y = date.getFullYear();
+    return '' + y + '-' + (m<=9 ? '0' + m : m) + '-' + (d <= 9 ? '0' + d : d);
+}
 
 var picker = new Litepicker({
     element: document.getElementById('datepicker'),
     singleMode: false,
     onSelect: function(start, end){
-        var str = '';
-        str += start ? start.format('Do MMMM YYYY') + ' to ' : '';
-        str += end ? end.format('Do MMMM YYYY') : '...';
-        document.getElementById('result-2').innerHTML = str;
+        console.log('select Date, from', dateToYMD(start), ' to ',dateToYMD(end));
+        updateMapByDate(start, end);
     },
     useResetBtn: true,
-
-
+    startDate: start_date,
+    endDate: end_date,
+    dropdowns: {
+        minYear: 2010,
+        maxYear: 2018,
+        months: false,
+        years: false,
+    }
 });
