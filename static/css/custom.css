@@ -40,141 +40,52 @@ path {
   opacity: 0;     
 }
 
-
 input{
-    position: absolute !important;
+    position: absolute ;
     left: 630px;
     top: 100px;
 }
 
+/* .content_legend_reset{
+  width:1000px;
+  margin:0 auto;
+  background:#FF69B4;
+  background-color: pink !important;
+}
+.leftDiv1{
+  float:left 
+}
+.rightDiv1{
+  background:#FFC0CB;
+  height:100px;
+  margin-left:200px;
+}  */
+
+/* #reset_btn{
+  position: absolute ;
+  left: 30px;
+  top: 250px;
+} */
+
+/* .selected{
+  fill: #07fd28 ;
+}
+
+.pickup{
+  fill: blue ;
+}
+
+.dropoff{
+  fill: red ;
+}
+
+.reset_btn{
+  position: absolute ;
+  left: 30px;
+  top: 250px;
+} */
 /* #selection_tips{
   position: absolute !important;
   left: 30px;
   top: 650px;
 } */
-
-/* #range-selector {
-  width: 50%;    
-  float: left;
-}
-#date-selector {
-  width: 50%;
-  float: right;  
-} */
-
-
-/* #sortHM_btn{
-#details_l1{
-    position: absolute;
-    left: 320px;
-    top: 170px;
-}
-
-#details_l2{
-    position: absolute;
-    left: 320px;
-    top: 370px;
-}
-
-#entropy{
-    position: absolute;
-    left: 320px;
-    top: 555px;
-}
-
-
-
-#slider-step{
-    position: absolute;
-    left: 300px;
-    top: 60px;
-}
-
-#value-step{
-    position: absolute;
-    left: 300px;
-    top: 100px;
-}
-
-#heatmap {
-    position: absolute;
-    left: 20px;
-    top: 40px;
-}
-
-#circlepack{
-    position: absolute;
-    left: 540px;
-    top: 60px;
-} */
-
-/*#tableList{*/
-    /*align-items: center;*/
-    /*position: absolute;*/
-    /*margin-top: 0px;*/
-    /*border: 1px solid black;*/
-    /*font-family: sans-serif;*/
-    /*font-size: 15px;*/
-    /*left: 50px;*/
-    /*top: 470px;*/
-/*}*/
-
-/*#table2DProjection{*/
-    /*align-items: center;*/
-    /*position: absolute;*/
-    /*margin-top: 0px;*/
-    /*border: 1px solid black;*/
-    /*font-family: sans-serif;*/
-    /*font-size: 15px;*/
-    /*left: 50px;*/
-    /*top: 975px;*/
-/*}*/
-
-/*#tableInfo{*/
-    /*align-items: center;*/
-    /*position: absolute;*/
-    /*margin-top: 0px;*/
-    /*border: 1px solid black;*/
-    /*font-family: sans-serif;*/
-    /*font-size: 15px;*/
-    /*left: 50px;*/
-    /*top: 670px;*/
-    /*width: 505px;*/
-    /*height: 300px;*/
-/*}*/
-
-/*#dimvarInfo{*/
-    /*align-items: center;*/
-    /*position: absolute;*/
-    /*margin-top: 0px;*/
-    /*border: 1px solid black;*/
-    /*font-family: sans-serif;*/
-    /*font-size: 15px;*/
-    /*left: 1430px;*/
-    /*top: 60px;*/
-    /*width: 130px;*/
-    /*height: 450px;*/
-/*}*/
-
-/*.clusterName{*/
-    /*margin: 8px 0px -4px 0px;*/
-/*}*/
-
-/*.projectionName{*/
-    /*margin: 8px 0px -4px 0px;*/
-/*}*/
-
-
-
-/*.axis line,*/
-/*.axis path {*/
-  /*fill: none;*/
-  /*!*stroke: #000;*!*/
-  /*shape-rendering: crispEdges;*/
-/*}*/
-
-/*.axis text {*/
-  /*text-shadow: 0 1px 0 #fff, 1px 0 0 #fff, 0 -1px 0 #fff, -1px 0 0 #fff;*/
-  /*cursor: move;*/
-/*}*/
-

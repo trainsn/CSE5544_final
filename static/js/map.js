@@ -15,7 +15,11 @@ function drawMap(select_data){
 
 var allDataset = ['Taxi', 'Bike']
 var select_dataset = 'Taxi';
-var data, projection, svg_map;
+var data, projection, svg_map, svgTransform;
+var circles;
+
+var shiftKey;
+
 drawMap(select_dataset)
 
 
@@ -32,14 +36,45 @@ d3.select("#selectDatasetBtn")
         console.log('select_dataset', select_dataset)
         drawMap(select_dataset)})
  
+d3.select("#reset_btn")
+    .on("click", function() {
+        svg_map.selectAll("circle").style("stroke-width", 0);
+        console.log('reset_btn clicked!')
+        svg_map.selectAll(".dropoff")
+            .style("fill", "red")
+        svg_map.selectAll(".pickup")
+            .style("fill", "blue")
+    })
+
+
+var legend = d3.select("#legend").append("svg")
+    .attr("width", 100)
+    .attr("height", 100)
+    .selectAll("g.legend")
+    .data(["pickup", "dropoff", "selected"])
+    .enter().append("svg:g")
+    .attr("class", "map_legend")
+    .attr("transform", function(d, i) { return "translate(10," + (i * 20 + 10) + ")"; });
+
+var colors_dict = {"pickup":"blue", "dropoff":"red", "selected":"green" }
+legend.append("svg:circle")
+    .attr("class", function(d){return d;})
+    .attr("fill", function(d){return colors_dict[d]})
+    .attr("r", 3);
+
+legend.append("svg:text")
+    .attr("x", 12)
+    .attr("dy", ".31em")
+    .text(function(d) { return d; });
+
 
 function d3GeoMap(geo_data, bike_data){
     data = bike_data;
     d3.select("#map").selectAll("*").remove();
 
     var container_map = d3.select("#map").append("div")
-    .style("width", width_map + margin_map.left + margin_map.right + "px")
-    .style("height", height_map + margin_map.top + margin_map.bottom + "px");
+        .style("width", width_map + margin_map.left + margin_map.right + "px")
+        .style("height", height_map + margin_map.top + margin_map.bottom + "px");
 
     svg_map = container_map.append("svg")
         .attr("id", "svg_map")
@@ -48,31 +83,13 @@ function d3GeoMap(geo_data, bike_data){
         .append("g")
         .attr("transform", "translate(" + margin_map.left + "," + margin_map.top + ")");
 
-    function zoomed() { 
-        d3.selectAll(".map_path").attr('transform', d3.event.transform);
-        d3.selectAll("circle").attr('transform', d3.event.transform);
-    }
-
-    var zoom = d3.zoom()
-        .scaleExtent([0.2, 10])
-        .on("zoom", zoomed);
-    
-    svg_map.call(zoom);
-    svg_map.call(brush.extent([[0,0], [100, 100]]));  
-    
-    // var projection = d3.geoMercator().scale(100).center([400,40]);
-    // var geoGenerator = d3.geoPath().projection(projection);
     projection = d3.geoMercator() 
         // .scale(500)
         // .parallels([33, 33])
         // .center([0, -39])
         .rotate([96, -40])
         .fitSize([width_map, height_map], geo_data);
-
-    console.log('geo_data', geo_data)
-        
-    var path = d3.geoPath()
-        .projection(projection);
+    var path = d3.geoPath().projection(projection);
 
     svg_map.selectAll(".map_path")
         .data(geo_data.features)
@@ -107,14 +124,29 @@ function d3GeoMap(geo_data, bike_data){
                 .transition()
                 .style("opacity", 0);
         });
-    
+
     var data_sliced = [];
     var len = Object.keys(bike_data).length > 2000? 2000:Object.keys(bike_data).length
     for (var i=0; i<len; i++)
         data_sliced[i] = bike_data[i];
-    console.log(select_dataset, 'data', data_sliced , Object.keys(data_sliced).length)
-    
+    // console.log(select_dataset, 'data', data_sliced , Object.keys(data_sliced).length)
+
     draw_circles(svg_map, data_sliced, projection)
+
+    function zoomed() { 
+        svgTransform = d3.event.transform
+        svg_map.selectAll(".map_path").attr('transform', d3.event.transform);
+        svg_map.selectAll("circle")
+            .attr('transform', d3.event.transform)
+            .attr("r", 2/d3.event.transform.k)
+    }
+    var zoom = d3.zoom()
+        .scaleExtent([0.1, 5])
+        .on("zoom", zoomed);
+    
+    svg_map.call(zoom);
+    brush_on_map();
+    // svg_map.call(brush.extent([[0,0], [100, 100]]));  
 }
 
 function draw_circles(svg_map, data_sliced, projection){
@@ -136,9 +168,10 @@ function draw_circles(svg_map, data_sliced, projection){
         .style("fill", "blue")
         .on("mouseenter", function(d) {
             d3.select(this)
+                .style("stroke-width", 1)
                 .style("stroke", "black")
         })
-
+       
     svg_map.selectAll(".dropoff")
         .data(data_sliced)
         .enter().append("circle")
@@ -157,13 +190,21 @@ function draw_circles(svg_map, data_sliced, projection){
         .style("fill", "red")
         .on("mouseenter", function(d) {
             d3.select(this)
+                .style("stroke-width", 1)
                 .style("stroke", "black")
         })
+
+    circles = svg_map.selectAll("circle")
+    circles.nodes().forEach(function(d) {
+        d.selected = false;
+        d.previouslySelected = false;
+    });
+
 }
 
 function updateMapByDate(start_date, end_date){
-    d3.selectAll(".dropoff").remove();
-    d3.selectAll(".pickup").remove();
+    svg_map.selectAll(".dropoff").remove();
+    svg_map.selectAll(".pickup").remove();
     document.getElementById('selection_tips').innerHTML = 'select date, loading...';
     var str;
     if (select_dataset == 'Bike'){
@@ -195,7 +236,6 @@ function updateMapByDate(start_date, end_date){
             selected_data_list = []
             for (var i=0; i<keys.length; i++)
                 selected_data_list.push(obj[keys[i]])
-            // d3.selectAll(".dropoff").remove();
             document.getElementById('selection_tips').innerHTML='';
             draw_circles(svg_map, selected_data_list, projection);
             // dispatch.call("selecting", this, obj);
@@ -220,40 +260,131 @@ function updateMapByDate(start_date, end_date){
 //     draw_circles(svg_map, selected_data_list, projection)
 // });
 
-var brush = d3.brush() 
-	.on("start", brushstart) 
-	.on("brush", brush)
-	.on("end", brushend); 
 
-function brushstart(p) {
-	console.log(brush.data, p, brush.data !== p)
-	svg_map.call(d3.brush().move)
+var brushGroup;
+
+function brush_on_map(){
+    brushGroup = svg_map.append("g")
+        .attr("class", "brush")
+        
+    d3.select("body").on('keydown', keydownedEvent)
+    d3.select("body").on('keyup', keyuppedEvent)
 }
 
-function brush(p) {
-	svg_map.selectAll("circle").attr('class', 'unselected');
-	var selection = d3.event.selection;
-	if (selection){
-		svg_map.selectAll("circle").classed("selected", function(d){
-            console.log('d', d)
-			return rectContains(selection, x[p.x](d[p.x]), y[p.y](d[p.y]));
+function keydownedEvent() {
+    const event = d3.event
+    if (event.metaKey || event.shiftKey) {   
+        console.log('shiftKey down');
+        bindBrush(); // disable transform and scale
+    } else {
+        console.log('unbindBrush');
+        unbindBrush();
+        circles.classed("selected", function (p) { return p.selected = false; });
+    }
+    shiftKey = event.shiftKey || event.metaKey;
+}
+
+function keyuppedEvent() {
+	shiftKey = d3.event.shiftKey || d3.event.metaKey;
+ }
+
+ function bindBrush() {
+    var x=0, y=0, scale=1;
+    if(svgTransform){
+        x = (0 - svgTransform.x) / svgTransform.k;
+        y = (0 - svgTransform.y) / svgTransform.k;
+        scale = svgTransform.k
+    }
+    console.log('bindBrush',x,y,scale)
+	brushGroup.call(d3.brush()
+        // .extent([[x, y], [(width_map + 100) * (scale), (height_map + 100) * (scale)]])
+        .extent([[0,0], [width_map, height_map]])
+		.on("start", brushstarted)
+		.on("brush", brushed)
+		.on("end", brushended))
+		.on("click.overlay", function (d) {
+			if (circles) {
+				circles.classed('selected', false)
+			}
 		});
-		svg_map.selectAll("circle.selected").attr('class', function(d) { return d.species; });
-	}
+ }
+
+ function unbindBrush() {
+    console.log('unbindBrush')
+    var x=0, y=0, scale=1;
+    if(svgTransform){
+        x = (0 - svgTransform.x) / svgTransform.k;
+        y = (0 - svgTransform.y) / svgTransform.k;
+        scale = svgTransform.k
+    }
+    brushGroup.call(d3.brush()
+        // .extent([[x, y], [(width_map + 100) * (scale), (height_map + 100) * (scale)]])
+        .extent([[0,0], [width_map, height_map]])
+        .on(".brush", null));
+    brushGroup.selectAll('*').remove();
+    brushGroup.attr('fill', false)
+        .attr('pointer-events', false)
+        .attr('style', false)
 }
 
-function rectContains(brush_coords, cx, cy) {
-	var x0 = brush_coords[0][0],
-	x1 = brush_coords[1][0],
-	y0 = brush_coords[0][1],
-	y1 = brush_coords[1][1];
-	return x0 <= cx && cx <= x1 && y0 <= cy && cy <= y1;    
+function brushstarted() {
+   if (d3.event.sourceEvent.type !== "end") {
+       circles.classed("selected", function (d) {
+           console.log('shiftKey && d.selected', shiftKey && d.selected)
+           return d.selected = d.previouslySelected = shiftKey && d.selected;
+       });
+   }
 }
 
-function brushend() {
-	var selection = d3.event.selection;
-	if (!selection){
-		svg_map.selectAll("circle").attr('class', function(d) { return d.species; });
-		svg_map.call(d3.brush().move);
-	}
+function brushed() {
+    if (d3.event.sourceEvent.type !== "end") {
+        var selection = d3.event.selection;
+        let x0, y0, x1, y1;
+        if (selection) {
+            x0 = selection[0][0]
+            x1 = selection[1][0]
+            y0 = selection[0][1]
+            y1 = selection[1][1]
+        }
+        let dx, dy; 
+        svg_map.selectAll('circle.pickup').classed("selected", function (d) {
+            if(svgTransform){
+                dx = projection([d['pickup_long'], d['pickup_lat']])[0] * svgTransform.k + svgTransform.x;
+                dy = projection([d['pickup_long'], d['pickup_lat']])[1] * svgTransform.k + svgTransform.y;
+            }
+            else{
+                dx = projection([d['pickup_long'], d['pickup_lat']])[0];
+                dy = projection([d['pickup_long'], d['pickup_lat']])[1];
+            }
+            return d.selected = d.previouslySelected ^
+                   (selection != null && x0 <= dx && dx < x1&& y0 <= dy && dy < y1);
+        });
+        svg_map.selectAll('circle.dropoff').classed("selected", function (d) {
+            if(svgTransform){
+                dx = projection([d['dropoff_long'], d['dropoff_lat']])[0] * svgTransform.k + svgTransform.x;
+                dy = projection([d['dropoff_long'], d['dropoff_lat']])[1] * svgTransform.k + svgTransform.y;
+            }
+            else{
+                dx = projection([d['dropoff_long'], d['dropoff_lat']])[0];
+                dy = projection([d['dropoff_long'], d['dropoff_lat']])[1];
+            }
+            return d.selected = d.previouslySelected ^
+                   (selection != null && x0 <= dx && dx < x1&& y0 <= dy && dy < y1);
+        });
+
+        svg_map.selectAll('circle.dropoff').each(function () {
+            const thisD3 = d3.select(this)
+            console.log(thisD3.attr('cx'), thisD3.attr('cy'))
+        })
+        svg_map.selectAll('circle.selected')
+            .style("fill", "green")
+            .style("stroke-width", 1)
+            .style("stroke", "black")
+    }
+}
+
+function brushended() {
+    if (d3.event.selection != null) {
+        d3.select(this).call(d3.event.target.move, null);
+    }
 }
