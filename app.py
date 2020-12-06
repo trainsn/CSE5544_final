@@ -83,11 +83,6 @@ def get_data():
     # testInfo['age'] = '28'
     return json.dumps(data_l)
 
-# @app.route('/get_geo_data')
-# def get_geo_data():
-#     with open(data_path + 'new-york-city-boroughs.geojson') as data_file:  
-#         data_nyc_geo = json.load(data_file)
-#     return data_nyc_geo
 
 # NYC: TAXI
 # NJC: bike
@@ -180,64 +175,54 @@ def get_NJC_Bike_data():
     return data_NJC_BikeShare
 
 
-@app.route('/returned_data', methods = ['POST']) #postmethod
-def get_post_javascript_data():
+# @app.route('/returned_data', methods = ['POST']) #postmethod
+# def get_post_javascript_data():
+#     try:
+#         loaded_data = json.load(request.data)
+#         print('len(selected_lat)', loaded_data)
+#         # for i in range(len(data)):
+#         #     # if isinstance(data[i], unicode):
+#         #     #     selected_lat[i] = data[i].encode('utf8')
+#         #     lats.append(data[i][u'lat'])
+#         #     back = dict({'labels': labels_.tolist(), 'cosine': cosine_sim.tolist()})
+#         back = dict({'data': loaded_data.tolist()})
+#         return back
+
+#     except ValueError:
+#         return "Error", 400
+
+@app.route('/post_updateMapByDate', methods = ['POST'])
+def post_updateMapByDate():
+    # if request.method == 'POST':
+    #     jsdata = request.form['data']
+    #     print('jsdata', jsdata)
+    #     return json.dumps({'status':'OK','jsdata':jsdata});
+    # else:
+    #     message = {'greeting': 'Hello from Flask!'}
+    #     return jsonify(message)
     try:
-        loaded_data = json.load(request.data)
-        print('len(selected_lat)', loaded_data)
-        # for i in range(len(data)):
-        #     # if isinstance(data[i], unicode):
-        #     #     selected_lat[i] = data[i].encode('utf8')
-        #     lats.append(data[i][u'lat'])
-        #     back = dict({'labels': labels_.tolist(), 'cosine': cosine_sim.tolist()})
-        back = dict({'data': loaded_data.tolist()})
+        # request_data = json.loads(request.data)#.encode('utf-8')
+        # request_data = json.dumps(request_data, indent = 4)
+        request_data = json.loads(request.data)
+        data = request_data['data']
+        start = request_data['start']
+        end = request_data['end']
+        select_dataset = request_data['select_dataset'] 
+        
+        df = pd.DataFrame.from_dict(data, orient='index')
+        start = pd.to_datetime(start).tz_localize(None) 
+        end = pd.to_datetime(end).tz_localize(None) 
+        df.loc[:,('pickup_time')] = pd.to_datetime(df['pickup_time'])#.replace(tz=None)
+        df.loc[:,('dropoff_time')] = pd.to_datetime(df['dropoff_time'])#.replace(tz=None)
+        
+        selected_data = df[df['pickup_time'].between(start, end)]
+        print( selected_data.loc[:,('pickup_lat','pickup_long','pickup_time','dropoff_time')])
+        back = dict({'selected_data': selected_data.to_json(orient="index", date_format="iso")})
+        print(back)
         return back
 
     except ValueError:
         return "Error", 400
-
-# @app.route('/postmethod', methods = ['POST'])
-# def get_post_javascript_data():
-#     # if request.method == 'POST':
-#     #     jsdata = request.form['data']
-#     #     print('jsdata', jsdata)
-#     #     return json.dumps({'status':'OK','jsdata':jsdata});
-#     # else:
-#     #     message = {'greeting': 'Hello from Flask!'}
-#     #     return jsonify(message)
-#     try:
-#         selected_lat = json.loads(request.data)
-#         print('len(selected_lat)', selected_lat[u'method'])
-#
-#         lats = []
-#         data = selected_lat[u'data']
-#         method = selected_lat[u'method']
-#
-#         for i in range(len(data)):
-#             # if isinstance(data[i], unicode):
-#             #     selected_lat[i] = data[i].encode('utf8')
-#             lats.append(data[i][u'lat'])
-#
-#         if method == 'kmeans':
-#             clustering = KMeans(n_clusters=int(selected_lat[u'k']), random_state=0).fit(lats) #kmeans.predict
-#             print clustering.labels_, len(data)
-#         elif method == 'hierarchical':
-#             clustering = AgglomerativeClustering(n_clusters=int(selected_lat[u'n_clusters']), affinity=selected_lat[u'affinity'], linkage = selected_lat[u'linkage']).fit(lats)
-#             print clustering.labels_
-#         elif method == "DBSCAN":
-#             clustering = DBSCAN(eps=float(selected_lat[u'eps']), min_samples=int(selected_lat[u'min_samples'])).fit(lats)
-#             print clustering.labels_
-#
-#         print(len(lats)) # 40*16
-#
-#         cosine_sim = np.array(cosine_similarity(lats, lats))
-#         print(cosine_sim.shape)
-#
-#         back = dict({'labels': clustering.labels_.tolist(), 'cosine':cosine_sim.tolist()})
-#         return back
-#
-#     except ValueError:
-#         return "Error", 400
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0',port=8000,debug=True)
