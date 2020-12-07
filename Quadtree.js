@@ -5,15 +5,16 @@
 
 (function (window) {
 
-	function Envelope(minX, minY, maxX, maxY){
+	function Envelope(minX, maxX, minY, maxY){
 		this.minX = minX;
-		this.minY = minY;
 		this.maxX = maxX;
+		this.minY = minY;
 		this.maxY = maxY;
 	}
 
-	Envelope.prototype.cotain = function(point){
-		return point.x >= minX && point.x <= maxX && point.y >= minY && point.y <= maxY;
+	Envelope.prototype.contain = function(point){
+		inside = point.x >= this.minX && point.x <= this.maxX && point.y >= this.minY && point.y <= this.maxY;
+		return inside;
 	} 
 
 	Envelope.prototype.intersect = function(envelope){
@@ -43,17 +44,17 @@
 		this.nodes[1] = null;
 		this.nodes[2] = null;
 		this.nodes[3] = null;
+		this.features = [];
 	}
 
 	QuadNode.prototype._classConstructor = QuadNode;
-	QuadNode.prototype.features = []; 
 
 	QuadNode.prototype.split = function(capacity){
 		num = this.features.length;
 		if (num <= capacity)
 			return;
 
-		for (int i = 0; i < 4; i++){
+		for (var i = 0; i < 4; i++){
 			this.nodes[i] = null;
 		}
 
@@ -68,7 +69,7 @@
 		sw = new Envelope(tMinX, tMidX, tMinY, tMidY);
 		nw = new Envelope(tMinX, tMidX, tMidY, tMaxY);
 		se = new Envelope(tMidX, tMaxX, tMinY, tMidY);
-		ne = new Envelope (tMidX, tMaxX, tMidY, tMaxY);
+		ne = new Envelope(tMidX, tMaxX, tMidY, tMaxY);
 
 		this.nodes[0] = new this._classConstructor(nw);
 		this.nodes[1] = new this._classConstructor(ne);
@@ -77,8 +78,8 @@
 
 		for (var i = 0; i < 4; i++){
 			for (var j = 0; j < this.features.length; j++){
-				if (this.nodes[i].bbox.contain(this.features[i])){
-					this.nodes[i].features.push(this.features[i]);
+				if (this.nodes[i].bbox.contain(this.features[j])){
+					this.nodes[i].features.push(this.features[j]);
 				}
 			}
 		}
@@ -166,23 +167,23 @@
 				tMaxY = features[i].y;
 		}
 		this.bbox = new Envelope(tMinX, tMaxX, tMinY, tMaxY);
-		this.root = new QuadTree(bbox);
+		this.root = new QuadNode(this.bbox);
 		for (var i = 0; i < features.length; i++){
 			if (this.bbox.contain(features[i])){
-				root.add(features[i]);
+				this.root.add(features[i]);
 			}
 		}
 
-		if (root.features.length > capacity)
-			root.split(capacity);
+		if (this.root.features.length > this.capacity)
+			this.root.split(this.capacity);
 
-		return tree;
+		return true;
 	}
 
 	QuadTree.prototype.countQuadNode = function(){
 		nodeCounter = {
 			interiorNum: 0,
-			leafNum: 0;
+			leafNum: 0
 		}
 		if (this.root != null){
 			this.root.countQuadNode(nodeCounter);
