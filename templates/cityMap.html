@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <title>New York City Taxi/Bike Trips</title>
+    <!-- <link rel="stylesheet" href="./static/css/custom.css"> -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/litepicker/dist/css/style.css"/>
+    <link rel="icon" href="data:,">
+    <link href="{{ url_for('static', filename='css/custom.css') }}" rel="stylesheet" type="text/css" >
+</head>
+
+<body class="application">
+    <div class="navbar navbar-inverse navbar-fixed-top">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <a class="navbar-brand" href="./" style="font-family: Times; font-size:20px; text-align:center"> &nbsp; New York City Taxi Trips</a>
+            </div>
+        </div>
+    </div>
+
+    <select id="selectDatasetBtn"></select>
+    <div id="map"></div>
+    <div id='neighborhoodPopover'> </div>
+    
+    <div class="content_legend_reset">
+        <div class="leftDiv1" id="legend"></div>
+        <div class="rightDiv1" style="position: absolute; left: 150px; top: 700px;">
+            <div id="selection_tips">updating</div>
+            <button type="button" id="reset_btn" style="position: relative; top: 5px;">reset</button>
+        </div>
+    </div>
+
+    <input type="text" id="datepicker" />
+    <!-- <div id="update-nav">
+        <div id="range-selector">
+          <input type="button" id="1m" class="period ui-button" value="1m" />
+          <input type="button" id="3m" class="period ui-button" value="3m"/>
+          <input type="button" id="6m" class="period ui-button" value="6m"/>
+          <input type="button" id="1y" class="period ui-button" value="1y"/>
+          <input type="button" id="all" class="period ui-button" value="All"/>
+        </div>
+        <div id="date-selector" class="">
+            From:<input type="text" id="fromDate"  class="ui-widget">
+            To:<input type="text" id="toDate"  class="ui-widget">
+        </div>
+      </div>
+      <br/> -->
+
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.2/js/bootstrap.min.js"></script>
+    <script src="https://d3js.org/d3.v4.min.js"></script>
+    <script src="https://d3js.org/queue.v1.min.js"></script>
+    <!--time picker-->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/litepicker/dist/js/main.js"></script>
+    <script type="text/javascript", src="./static/lib/js/jquery.min.js"></script>
+
+    <script>
+        var geo_nycDataUrl = "{{ url_for('get_nyc_geo_data') }}";
+        var geo_njcDataUrl = "{{ url_for('get_njc_geo_data') }}";
+        var njcBikeDataUrl = "{{ url_for('get_NJC_Bike_data') }}";
+        var nycTaxiDataUrl = "{{ url_for('get_NYC_Taxi_data') }}";
+    </script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/map.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/selection.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/brush_selection.js') }}"></script>
+    <!-- // <script type="text/javascript", src="./static/js/CirclePacking.js"></script> -->
+
+
+
+</body>
+</html>
