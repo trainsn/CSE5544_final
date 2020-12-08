@@ -37,6 +37,37 @@
 		return false;
 	}
 
+	Envelope.prototype.draw = function(svg){
+		svg.append("line")  
+            .attr("x1", this.minX)
+            .attr("y1", this.minY)
+            .attr("x2", this.maxX)
+            .attr("y2", this.minY)
+            .attr("stroke", "black")
+            .attr("stroke-width", "2px");
+        svg.append("line")  
+            .attr("x1", this.maxX)
+            .attr("y1", this.minY)
+            .attr("x2", this.maxX)
+            .attr("y2", this.maxY)
+            .attr("stroke", "black")
+            .attr("stroke-width", "2px");
+        svg.append("line")  
+            .attr("x1", this.maxX)
+            .attr("y1", this.maxY)
+            .attr("x2", this.minX)
+            .attr("y2", this.maxY)
+            .attr("stroke", "black")
+            .attr("stroke-width", "2px");
+        svg.append("line")  
+            .attr("x1", this.minX)
+            .attr("y1", this.maxY)
+            .attr("x2", this.minX)
+            .attr("y2", this.minY)
+            .attr("stroke", "black")
+            .attr("stroke-width", "2px");
+	}
+
 	function QuadNode(box){
 		this.bbox = box;
 		this.nodes = new Array();
@@ -102,15 +133,14 @@
 		}
 	}
 
-	QuadNode.prototype.countHeight = function(height){
-		height++;
+	QuadNode.prototype.countHeight = function(height, maxHeight){
+		if (height + 1 > maxHeight.h)
+			maxHeight.h = height + 1;
 		if (!this.isLeafNode()){
-			cur = height;
 			for (var i = 0; i < 4; i++){
-				height = Math.max(height, nodes[i].countHeight(cur))
+				this.nodes[i].countHeight(height + 1, maxHeight);
 			}
 		}
-		return height;
 	}
 
 	QuadNode.prototype.add = function(feat){
@@ -139,6 +169,16 @@
 			}
 		}
 		return out;
+	} 
+
+	QuadNode.prototype.draw = function(svg){
+		if (this.isLeafNode()){
+			this.bbox.draw(svg);
+		} 
+		else {
+			for (var i = 0; i < 4; i++)
+				this.nodes[i].draw(svg);
+		}
 	} 
 
 	function QuadTree(capacity){
@@ -180,26 +220,27 @@
 		return true;
 	}
 
-	QuadTree.prototype.countQuadNode = function(){
-		nodeCounter = {
-			interiorNum: 0,
-			leafNum: 0
-		}
+	QuadTree.prototype.countQuadNode = function(nodeCounter){
 		if (this.root != null){
-			this.root.countQuadNode(nodeCounter);
+			this.root.countNode(nodeCounter);
 		}
 	}
 
 	QuadTree.prototype.countHeight = function(){
-		height = 0;
 		if (this.root != null){
-			height = this.root.countHeight();
+			maxHeight = {h: 0};
+			height = this.root.countHeight(0, maxHeight);
 		}
-		return height;
+		return maxHeight.h;
 	}
 
 	QuadTree.prototype.rangeQuery = function(rect){
 		this.root.rangeQuery(rect);
+	}
+
+	QuadTree.prototype.draw = function(svg){
+		if (this.root != null)
+			this.root.draw(svg);
 	}
 
 	window.QuadTree = QuadTree;

@@ -138,7 +138,10 @@ function d3GeoMap(geo_data, bike_data){
         svg_map.selectAll(".map_path").attr('transform', d3.event.transform);
         svg_map.selectAll("circle")
             .attr('transform', d3.event.transform)
-            .attr("r", 2/d3.event.transform.k)
+            .attr("r", 2/d3.event.transform.k);
+        svg_map.selectAll("line")
+            .attr('transform', d3.event.transform)
+            .attr("stroke-width", 2/d3.event.transform.k);
     }
     var zoom = d3.zoom()
         .scaleExtent([0.1, 5])
@@ -150,6 +153,27 @@ function d3GeoMap(geo_data, bike_data){
 }
 
 function draw_circles(svg_map, data_sliced, projection){
+    pickupLoc = [];
+    for (var i = 0; i < data_sliced.length; i++){
+        if (data_sliced[i]['pickup_long'] != 0 && data_sliced[i]['pickup_lat'] != 0){
+            projLoc = projection([data_sliced[i]['pickup_long'], data_sliced[i]['pickup_lat']]); 
+            pickupLoc.push({
+                x: projLoc[0],
+                y: projLoc[1]
+            })
+        }  
+    }
+    qtree = new QuadTree(70);
+    qtree.constructQuadTree(pickupLoc);
+    qtree.draw(svg_map);
+    console.log("QuadTree height: ", qtree.countHeight());
+    nodeCounter = {
+        interiorNum: 0,
+        leafNum: 0
+    }
+    qtree.countQuadNode(nodeCounter);
+    console.log("QuadTree nodes: ", nodeCounter);
+
     svg_map.selectAll(".pickup")
         .data(data_sliced)
         .enter().append("circle")
@@ -166,33 +190,33 @@ function draw_circles(svg_map, data_sliced, projection){
             else{
                 return projection([d['pickup_long'], d['pickup_lat']])[1];}})
         .style("fill", "blue")
-        .on("mouseenter", function(d) {
-            d3.select(this)
-                .style("stroke-width", 1)
-                .style("stroke", "black")
-        })
+        // .on("mouseenter", function(d) {
+        //     d3.select(this)
+        //         .style("stroke-width", 1)
+        //         .style("stroke", "black")
+        // })
        
-    svg_map.selectAll(".dropoff")
-        .data(data_sliced)
-        .enter().append("circle")
-        .attr("class", "dropoff")
-        .attr("r", 2)
-        .attr("cx", function(d) {
-            if (select_dataset == 'Bike'){
-                return projection([d['End Station Longitude'], d['End Station Latitude']])[0]; }
-            else{
-                return projection([d['dropoff_long'], d['dropoff_lat']])[0];}})
-        .attr("cy", function(d) {
-            if (select_dataset == 'Bike'){
-                return projection([d['End Station Longitude'], d['End Station Latitude']])[1]; }
-            else{
-                return projection([d['dropoff_long'], d['dropoff_lat']])[1];}})
-        .style("fill", "red")
-        .on("mouseenter", function(d) {
-            d3.select(this)
-                .style("stroke-width", 1)
-                .style("stroke", "black")
-        })
+    // svg_map.selectAll(".dropoff")
+    //     .data(data_sliced)
+    //     .enter().append("circle")
+    //     .attr("class", "dropoff")
+    //     .attr("r", 2)
+    //     .attr("cx", function(d) {
+    //         if (select_dataset == 'Bike'){
+    //             return projection([d['End Station Longitude'], d['End Station Latitude']])[0]; }
+    //         else{
+    //             return projection([d['dropoff_long'], d['dropoff_lat']])[0];}})
+    //     .attr("cy", function(d) {
+    //         if (select_dataset == 'Bike'){
+    //             return projection([d['End Station Longitude'], d['End Station Latitude']])[1]; }
+    //         else{
+    //             return projection([d['dropoff_long'], d['dropoff_lat']])[1];}})
+    //     .style("fill", "red")
+        // .on("mouseenter", function(d) {
+        //     d3.select(this)
+        //         .style("stroke-width", 1)
+        //         .style("stroke", "black")
+        // })
 
     circles = svg_map.selectAll("circle")
     circles.nodes().forEach(function(d) {

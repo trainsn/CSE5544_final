@@ -203,6 +203,7 @@ def post_updateMapByDate():
     try:
         # request_data = json.loads(request.data)#.encode('utf-8')
         # request_data = json.dumps(request_data, indent = 4)
+        print(request.data)
         request_data = json.loads(request.data)
         data = request_data['data']
         start = request_data['start']
