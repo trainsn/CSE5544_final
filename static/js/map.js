@@ -1,4 +1,4 @@
-var margin_map = {top: 20, right: 30, bottom: 30, left: 10},
+var margin_map = {top: 60, right: 30, bottom: 30, left: 10},
     width_map  = 600 - margin_map.left - margin_map.right,
     height_map = 600 - margin_map.top - margin_map.bottom;
 
@@ -15,10 +15,15 @@ function drawMap(select_data){
 
 var allDataset = ['Taxi', 'Bike']
 var select_dataset = 'Taxi';
-var data, projection, svg_map, svgTransform;
+var data, data_sliced;
+var selected_data_list;
+var selected_data_where_when_list;
+var projection, svg_map, svgTransform;
 var circles;
+var qtree;
 
 var shiftKey;
+
 
 drawMap(select_dataset)
 
@@ -29,8 +34,6 @@ d3.select("#selectDatasetBtn")
     .enter().append('option')
     .text(function (d) { return d; }) 
     .attr("value", function (d) { return d; }) 
-    
-d3.select("#selectDatasetBtn")
     .on("change", function(d) {
         select_dataset = d3.select(this).property("value")
         console.log('select_dataset', select_dataset)
@@ -40,28 +43,50 @@ d3.select("#reset_btn")
     .on("click", function() {
         svg_map.selectAll("circle").style("stroke-width", 0);
         console.log('reset_btn clicked!')
-        svg_map.selectAll(".dropoff")
-            .style("fill", "red")
-        svg_map.selectAll(".pickup")
-            .style("fill", "blue")
+        document.getElementById('selection_tips').innerHTML='';
+        svg_map.selectAll("circle").remove();
+        LOD(svg_map, qtree, projection);
+
+        circles = svg_map.selectAll("circle")
+        circles.nodes().forEach(function(d) {
+        d.selected = false;
+        d.previouslySelected = false;
+    });
+
+        // svg_map.selectAll(".dropoff")
+        //     .style("fill", "red")
+        
+        // svg_map.selectAll(".dropoffSel")
+        //     .style("fill", "red")
+        //     .classed("dropoffSel", false)
+        //     .classed("dropoff", true)
+
+        // svg_map.selectAll(".pickup")
+        //     .style("fill", "blue")
+        //     .classed("pickupSel", false)
+
+        // svg_map.selectAll(".pickupSel")
+        //     .style("fill", "blue")
+        //     .classed("pickupSel", false)
+        //     .classed("pickup", false)
     })
 
 
+var colors_dict = {"pickup":"blue", "dropoff":"red", 
+    "selected pickup":"green", "selected dropoff":"yellow" }
 var legend = d3.select("#legend").append("svg")
-    .attr("width", 100)
+    .attr("width", 140)
     .attr("height", 100)
     .selectAll("g.legend")
-    .data(["pickup", "dropoff", "selected"])
+    .data(Object.keys(colors_dict))
     .enter().append("svg:g")
     .attr("class", "map_legend")
     .attr("transform", function(d, i) { return "translate(10," + (i * 20 + 10) + ")"; });
 
-var colors_dict = {"pickup":"blue", "dropoff":"red", "selected":"green" }
+
 legend.append("svg:circle")
-    .attr("class", function(d){return d;})
     .attr("fill", function(d){return colors_dict[d]})
     .attr("r", 3);
-
 legend.append("svg:text")
     .attr("x", 12)
     .attr("dy", ".31em")
@@ -125,126 +150,269 @@ function d3GeoMap(geo_data, bike_data){
                 .style("opacity", 0);
         });
 
-    var data_sliced = [];
-    var len = Object.keys(bike_data).length > 2000? 2000:Object.keys(bike_data).length
-    for (var i=0; i<len; i++)
-        data_sliced[i] = bike_data[i];
-    // console.log(select_dataset, 'data', data_sliced , Object.keys(data_sliced).length)
-
-    draw_circles(svg_map, data_sliced, projection)
-
+    
+    data_sliced = [];
+    var len = Object.keys(bike_data).length;// > 5000? 5000:Object.keys(bike_data).length
+    for (var i=0; i<len; i++){
+        // data_sliced[i] = bike_data[i];
+        data_sliced.push(bike_data[i]);
+    }
+    
+    var pickupLoc = [];
+    for (var i = 0; i < data_sliced.length; i++){
+        if (data_sliced[i]['pickup_long'] != 0 && data_sliced[i]['pickup_lat'] != 0){
+            projLoc = projection([data_sliced[i]['pickup_long'], data_sliced[i]['pickup_lat']]); 
+            pickupLoc.push({
+                x: projLoc[0],
+                y: projLoc[1],
+                idx: i
+            })
+        }  
+    }
+    qtree = new QuadTree(70);
+    qtree.constructQuadTree(pickupLoc);
+    qtree.draw(svg_map);
+    console.log("QuadTree height: ", qtree.countHeight());
+    nodeCounter = {
+        interiorNum: 0,
+        leafNum: 0
+    }
+    qtree.countQuadNode(nodeCounter);
+    console.log("QuadTree nodes: ", nodeCounter);
+    
+    // draw_circles(svg_map, data_sliced, projection);
+    LOD(svg_map, qtree, projection);
+    
     function zoomed() { 
         svgTransform = d3.event.transform
         svg_map.selectAll(".map_path").attr('transform', d3.event.transform);
         svg_map.selectAll("circle")
             .attr('transform', d3.event.transform)
             .attr("r", 2/d3.event.transform.k)
+        svg_map.selectAll("line")
+            .attr('transform', d3.event.transform)
+            .attr("stroke-width", 2/d3.event.transform.k);
+        LOD(svg_map, qtree, projection);
     }
+
     var zoom = d3.zoom()
-        .scaleExtent([0.1, 5])
+        .scaleExtent([0.1, 10])
         .on("zoom", zoomed);
     
     svg_map.call(zoom);
     brush_on_map();
-    // svg_map.call(brush.extent([[0,0], [100, 100]]));  
-}
-
-function draw_circles(svg_map, data_sliced, projection){
-    svg_map.selectAll(".pickup")
-        .data(data_sliced)
-        .enter().append("circle")
-        .attr("class", "pickup")
-        .attr("r", 2)
-        .attr("cx", function(d) {
-            if (select_dataset == 'Bike'){
-                return projection([d['Start Station Longitude'], d['Start Station Latitude']])[0]; }
-            else{
-                return projection([d['pickup_long'], d['pickup_lat']])[0];}})
-        .attr("cy", function(d) {
-            if (select_dataset == 'Bike'){
-                return projection([d['Start Station Longitude'], d['Start Station Latitude']])[1]; }
-            else{
-                return projection([d['pickup_long'], d['pickup_lat']])[1];}})
-        .style("fill", "blue")
-        .on("mouseenter", function(d) {
-            d3.select(this)
-                .style("stroke-width", 1)
-                .style("stroke", "black")
-        })
-       
-    svg_map.selectAll(".dropoff")
-        .data(data_sliced)
-        .enter().append("circle")
-        .attr("class", "dropoff")
-        .attr("r", 2)
-        .attr("cx", function(d) {
-            if (select_dataset == 'Bike'){
-                return projection([d['End Station Longitude'], d['End Station Latitude']])[0]; }
-            else{
-                return projection([d['dropoff_long'], d['dropoff_lat']])[0];}})
-        .attr("cy", function(d) {
-            if (select_dataset == 'Bike'){
-                return projection([d['End Station Longitude'], d['End Station Latitude']])[1]; }
-            else{
-                return projection([d['dropoff_long'], d['dropoff_lat']])[1];}})
-        .style("fill", "red")
-        .on("mouseenter", function(d) {
-            d3.select(this)
-                .style("stroke-width", 1)
-                .style("stroke", "black")
-        })
 
     circles = svg_map.selectAll("circle")
     circles.nodes().forEach(function(d) {
         d.selected = false;
         d.previouslySelected = false;
     });
+    // svg_map.call(brush.extent([[0,0], [100, 100]]));  
+}
+
+function draw_selected_circles(svg_map, data_, projection){
+    svg_map.selectAll(".dropoff").remove();
+    svg_map.selectAll(".pickup").remove();
+    svg_map.selectAll(".dropoffSel").remove();
+    svg_map.selectAll(".pickupSel").remove();
+
+    svg_map.selectAll(".pickupSel")
+        .data(data_)
+        .enter().append("circle")
+        .attr("class", "pickupSel")
+        .attr("r", 2)
+        .attr("cx", function(d) {
+            if (svgTransform)
+                return projection([d['pickup_long'], d['pickup_lat']])[0] * svgTransform.k + svgTransform.x;
+            else 
+                return projection([d['pickup_long'], d['pickup_lat']])[0];})
+        .attr("cy", function(d) {
+            if (svgTransform)
+                return projection([d['pickup_long'], d['pickup_lat']])[1] * svgTransform.k + svgTransform.y;
+            else
+                return projection([d['pickup_long'], d['pickup_lat']])[1];})
+        .style("fill", "green")
+        .style("stroke-width", 0.25)
+        .style("stroke", "black")
+       
+    svg_map.selectAll(".dropoffSel")
+        .data(data_)
+        .enter().append("circle")
+        .attr("class", "dropoffSel")
+        .attr("r", 2)
+        .attr("cx", function(d) {
+            if (svgTransform)
+                return projection([d['dropoff_long'], d['dropoff_lat']])[0] * svgTransform.k + svgTransform.x;
+            else 
+                return projection([d['dropoff_long'], d['dropoff_lat']])[0];})
+        .attr("cy", function(d) {
+            if (svgTransform)
+                return projection([d['dropoff_long'], d['dropoff_lat']])[1] * svgTransform.k + svgTransform.y;
+            else
+                return projection([d['dropoff_long'], d['dropoff_lat']])[1];})
+        .style("fill", "yellow")
+        .style("stroke-width", 0.25)
+        .style("stroke", "black")
+        // .on("mouseenter", function(d) {
+        //     d3.select(this)
+        //         .style("stroke-width", .25)
+        //         .style("stroke", "black")
+        // })
+
+    
+
+    // svg_map.selectAll(".pickup")
+    //     .data(data_)
+    //     .enter().append("circle")
+    //     .attr("class", "pickup")
+    //     .attr("id", function(d){return d['index'];})
+    //     .attr("r", 2)
+    //     .attr("cx", function(d) {
+    //         if (select_dataset == 'Bike'){
+    //             return projection([d['Start Station Longitude'], d['Start Station Latitude']])[0]; }
+    //         else{
+    //             return projection([d['pickup_long'], d['pickup_lat']])[0];}})
+    //     .attr("cy", function(d) {
+    //         if (select_dataset == 'Bike'){
+    //             return projection([d['Start Station Longitude'], d['Start Station Latitude']])[1]; }
+    //         else{
+    //             return projection([d['pickup_long'], d['pickup_lat']])[1];}})
+    //     .style("fill", "blue")
+    //     .on("mouseenter", function(d) {
+    //         d3.select(this)
+    //             .style("stroke-width", .25)
+    //             .style("stroke", "black")
+    //     })
+       
+    // svg_map.selectAll(".dropoff")
+    //     .data(data_)
+    //     .enter().append("circle")
+    //     .attr("class", "dropoff")
+    //     .attr("id", function(d){return d['index'];})
+    //     .attr("r", 2)
+    //     .attr("cx", function(d) {
+    //         if (select_dataset == 'Bike'){
+    //             return projection([d['End Station Longitude'], d['End Station Latitude']])[0]; }
+    //         else{
+    //             return projection([d['dropoff_long'], d['dropoff_lat']])[0];}})
+    //     .attr("cy", function(d) {
+    //         if (select_dataset == 'Bike'){
+    //             return projection([d['End Station Longitude'], d['End Station Latitude']])[1]; }
+    //         else{
+    //             return projection([d['dropoff_long'], d['dropoff_lat']])[1];}})
+    //     .style("fill", "red")
+    //     .on("mouseenter", function(d) {
+    //         d3.select(this)
+    //             .style("stroke-width", .25)
+    //             .style("stroke", "black")
+    //     })
 
 }
 
-function updateMapByDate(start_date, end_date){
+function LOD(svg_map, qtree, projection){
+    if (svgTransform)
+        sample_rate = Math.min(20, svgTransform.k);
+    else 
+        sample_rate = 1;
+    var selectedFeatures = qtree.rangeQuery(qtree.bbox, sample_rate);
+
+    selected_data_list = []
+    for (var i = 0; i < selectedFeatures.length; i++){
+        selected_data_list.push(data_sliced[selectedFeatures[i].idx]);
+    }
+
     svg_map.selectAll(".dropoff").remove();
     svg_map.selectAll(".pickup").remove();
-    document.getElementById('selection_tips').innerHTML = 'select date, loading...';
-    var str;
-    if (select_dataset == 'Bike'){
-        console.log('select Bike')
-        str = {
-            data: data,
-            start: start_date,
-            end: end_date,
-            select_dataset: 'Bike',
-        };}
+    svg_map.selectAll(".pickup")
+        .data(selected_data_list)
+        .enter().append("circle")
+        .attr("class", "pickup")
+        .attr("r", 2)
+        .attr("cx", function(d) {
+            if (svgTransform)
+                return projection([d['pickup_long'], d['pickup_lat']])[0] * svgTransform.k + svgTransform.x;
+            else 
+                return projection([d['pickup_long'], d['pickup_lat']])[0];})
+        .attr("cy", function(d) {
+            if (svgTransform)
+                return projection([d['pickup_long'], d['pickup_lat']])[1] * svgTransform.k + svgTransform.y;
+            else
+                return projection([d['pickup_long'], d['pickup_lat']])[1];})
+        .style("fill", "blue")
+        .on("mouseenter", function(d) {
+            d3.select(this)
+                .style("stroke-width", .25)
+                .style("stroke", "black")
+        })
+       
+    svg_map.selectAll(".dropoff")
+        .data(selected_data_list)
+        .enter().append("circle")
+        .attr("class", "dropoff")
+        .attr("r", 2)
+        .attr("cx", function(d) {
+            if (svgTransform)
+                return projection([d['dropoff_long'], d['dropoff_lat']])[0] * svgTransform.k + svgTransform.x;
+            else 
+                return projection([d['dropoff_long'], d['dropoff_lat']])[0];})
+        .attr("cy", function(d) {
+            if (svgTransform)
+                return projection([d['dropoff_long'], d['dropoff_lat']])[1] * svgTransform.k + svgTransform.y;
+            else
+                return projection([d['dropoff_long'], d['dropoff_lat']])[1];})
+        .style("fill", "red")
+        .on("mouseenter", function(d) {
+            d3.select(this)
+                .style("stroke-width", .25)
+                .style("stroke", "black")
+        })
+}
+
+
+function updateMapByDate(start_date, end_date){
+    document.getElementById('selection_tips').innerHTML = 'select date, updating...';
+    // [brushed_data, selected_ids] = get_brushed_data();
+    // selected_data_list_dict = Object.assign({}, selected_data_list);
+    // console.log('selected_data_list_dict', selected_data_list_dict)
+    
+    if (selected_data_list.length == 0){
+        console.log('selected_data_list length is 0');
+        document.getElementById('selection_tips').innerHTML = 'selected_data_list length is 0...';
+    }
     else{
-        console.log('select Taxi')
-        str = {
-            data: data,
+        var str = {
+            data: Object.assign({}, selected_data_list),
             start: start_date,
             end: end_date,
-            select_dataset: 'Taxi',
-        };}
+            select_dataset: select_dataset,
+        };
+        
+        svg_map.selectAll(".dropoff").remove();
+        svg_map.selectAll(".pickup").remove();
+        $.ajax({
+            url: '/post_updateMapByDate',
+            data: JSON.stringify(str),
+            type: 'POST',
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            success: function(response) {
+                var obj = JSON.parse(response.selected_data);
+                keys = Object.keys(obj)   
+                selected_data_where_when_list = []
+                for (var i=0; i<keys.length; i++)
+                    selected_data_where_when_list.push(obj[keys[i]])
+                document.getElementById('selection_tips').innerHTML='';
+                // draw_circles(svg_map, selected_data_list, projection, true);
+                // LOD(svg_map, qtree, projection);
+                draw_selected_circles(svg_map, selected_data_where_when_list, projection)
+                // dispatch.call("selecting", this, obj);
+            },
+            error: function(error) {
+                console.log(error);
+            }
+        });
+    }
 
-    $.ajax({
-        url: '/post_updateMapByDate',
-        data: JSON.stringify(str),
-        type: 'POST',
-        contentType: "application/json; charset=utf-8",
-        dataType: "json",
-        success: function(response) {
-            var obj = JSON.parse(response.selected_data);
-            keys = Object.keys(obj)   
-            selected_data_list = []
-            for (var i=0; i<keys.length; i++)
-                selected_data_list.push(obj[keys[i]])
-            document.getElementById('selection_tips').innerHTML='';
-            draw_circles(svg_map, selected_data_list, projection);
-            // dispatch.call("selecting", this, obj);
-
-        },
-        error: function(error) {
-            console.log(error);
-        }
-    });
 }
 
 // dispatch = d3.dispatch("selecting");
@@ -279,7 +447,8 @@ function keydownedEvent() {
     } else {
         console.log('unbindBrush');
         unbindBrush();
-        circles.classed("selected", function (p) { return p.selected = false; });
+        d3.selectAll('.pickup').classed("pickupSel", function (p) { return p.selected = false; });
+        d3.selectAll('.dropoff').classed("dropoffSel", function (p) { return p.selected = false; });
     }
     shiftKey = event.shiftKey || event.metaKey;
 }
@@ -304,7 +473,8 @@ function keyuppedEvent() {
 		.on("end", brushended))
 		.on("click.overlay", function (d) {
 			if (circles) {
-				circles.classed('selected', false)
+                circles.classed('pickupSel', false);
+                circles.classed('dropoffSel', false);
 			}
 		});
  }
@@ -329,10 +499,14 @@ function keyuppedEvent() {
 
 function brushstarted() {
    if (d3.event.sourceEvent.type !== "end") {
-       circles.classed("selected", function (d) {
+        d3.selectAll('.pickup').classed("pickupSel", function (d) {
            console.log('shiftKey && d.selected', shiftKey && d.selected)
            return d.selected = d.previouslySelected = shiftKey && d.selected;
        });
+       d3.selectAll('.dropoff').classed("dropoffSel", function (d) {
+        console.log('shiftKey && d.selected', shiftKey && d.selected)
+        return d.selected = d.previouslySelected = shiftKey && d.selected;
+    });
    }
 }
 
@@ -341,45 +515,95 @@ function brushed() {
         var selection = d3.event.selection;
         let x0, y0, x1, y1;
         if (selection) {
-            x0 = selection[0][0]
-            x1 = selection[1][0]
-            y0 = selection[0][1]
-            y1 = selection[1][1]
+            x0 = selection[0][0];
+            x1 = selection[1][0];
+            y0 = selection[0][1];
+            y1 = selection[1][1];
+            if(svgTransform){
+                x0 = (x0 - svgTransform.x) / svgTransform.k;
+                x1 = (x1 - svgTransform.x) / svgTransform.k;
+                y0 = (y0 - svgTransform.y) / svgTransform.k;
+                y1 = (y1 - svgTransform.y) / svgTransform.k;
+            }
         }
-        let dx, dy; 
-        svg_map.selectAll('circle.pickup').classed("selected", function (d) {
-            if(svgTransform){
-                dx = projection([d['pickup_long'], d['pickup_lat']])[0] * svgTransform.k + svgTransform.x;
-                dy = projection([d['pickup_long'], d['pickup_lat']])[1] * svgTransform.k + svgTransform.y;
-            }
-            else{
-                dx = projection([d['pickup_long'], d['pickup_lat']])[0];
-                dy = projection([d['pickup_long'], d['pickup_lat']])[1];
-            }
-            return d.selected = d.previouslySelected ^
-                   (selection != null && x0 <= dx && dx < x1&& y0 <= dy && dy < y1);
-        });
-        svg_map.selectAll('circle.dropoff').classed("selected", function (d) {
-            if(svgTransform){
-                dx = projection([d['dropoff_long'], d['dropoff_lat']])[0] * svgTransform.k + svgTransform.x;
-                dy = projection([d['dropoff_long'], d['dropoff_lat']])[1] * svgTransform.k + svgTransform.y;
-            }
-            else{
-                dx = projection([d['dropoff_long'], d['dropoff_lat']])[0];
-                dy = projection([d['dropoff_long'], d['dropoff_lat']])[1];
-            }
-            return d.selected = d.previouslySelected ^
-                   (selection != null && x0 <= dx && dx < x1&& y0 <= dy && dy < y1);
-        });
+        var selectedRect = new Envelope(x0, x1, y0, y1);
+        var selectedFeatures = qtree.rangeQuery(selectedRect, 10);
 
-        svg_map.selectAll('circle.dropoff').each(function () {
-            const thisD3 = d3.select(this)
-            console.log(thisD3.attr('cx'), thisD3.attr('cy'))
-        })
-        svg_map.selectAll('circle.selected')
+        selected_data_list = []
+        for (var i = 0; i < selectedFeatures.length; i++){
+            selected_data_list.push(data_sliced[selectedFeatures[i].idx]);
+        }
+        
+        svg_map.selectAll(".pickupSel").remove();
+        svg_map.selectAll(".pickupSel")
+            .data(selected_data_list)
+            .enter().append("circle")
+            .attr("class", "pickupSel")
+            .attr("r", 2)
+            .attr("cx", function(d) {
+                if (svgTransform)
+                    return projection([d['pickup_long'], d['pickup_lat']])[0] * svgTransform.k + svgTransform.x;
+                else 
+                    return projection([d['pickup_long'], d['pickup_lat']])[0];})
+            .attr("cy", function(d) {
+                if (svgTransform)
+                    return projection([d['pickup_long'], d['pickup_lat']])[1] * svgTransform.k + svgTransform.y;
+                else
+                    return projection([d['pickup_long'], d['pickup_lat']])[1];})
             .style("fill", "green")
-            .style("stroke-width", 1)
+            .style("stroke-width", 0.25)
+            .style("stroke", "black");
+
+        
+        svg_map.selectAll(".dropoffSel").remove();
+        svg_map.selectAll(".dropoffSel")
+            .data(selected_data_list)
+            .enter().append("circle")
+            .attr("class", "dropoffSel")
+            .attr("r", 2)
+            .attr("cx", function(d) {
+                if (svgTransform)
+                    return projection([d['dropoff_long'], d['dropoff_lat']])[0] * svgTransform.k + svgTransform.x;
+                else 
+                    return projection([d['dropoff_long'], d['dropoff_lat']])[0];})
+            .attr("cy", function(d) {
+                if (svgTransform)
+                    return projection([d['dropoff_long'], d['dropoff_lat']])[1] * svgTransform.k + svgTransform.y;
+                else
+                    return projection([d['dropoff_long'], d['dropoff_lat']])[1];})
+            .style("fill", "yellow")
+            .style("stroke-width", 0.25)
             .style("stroke", "black")
+        // let dx, dy; 
+        // svg_map.selectAll('circle.pickup').classed("selected", function (d) {
+        //     if(svgTransform){
+        //         dx = projection([d['pickup_long'], d['pickup_lat']])[0] * svgTransform.k + svgTransform.x;
+        //         dy = projection([d['pickup_long'], d['pickup_lat']])[1] * svgTransform.k + svgTransform.y;
+        //     }
+        //     else{
+        //         dx = projection([d['pickup_long'], d['pickup_lat']])[0];
+        //         dy = projection([d['pickup_long'], d['pickup_lat']])[1];
+        //     }
+        //     return d.selected = d.previouslySelected ^
+        //            (selection != null && x0 <= dx && dx < x1&& y0 <= dy && dy < y1);
+        // });
+        // svg_map.selectAll('circle.dropoff').classed("selected", function (d) {
+        //     if(svgTransform){
+        //         dx = projection([d['dropoff_long'], d['dropoff_lat']])[0] * svgTransform.k + svgTransform.x;
+        //         dy = projection([d['dropoff_long'], d['dropoff_lat']])[1] * svgTransform.k + svgTransform.y;
+        //     }
+        //     else{
+        //         dx = projection([d['dropoff_long'], d['dropoff_lat']])[0];
+        //         dy = projection([d['dropoff_long'], d['dropoff_lat']])[1];
+        //     }
+        //     return d.selected = d.previouslySelected ^
+        //            (selection != null && x0 <= dx && dx < x1&& y0 <= dy && dy < y1);
+        // });
+
+        // svg_map.selectAll('circle.selected')
+        //     .style("fill", "green")
+        //     .style("stroke-width", .25)
+        //     .style("stroke", "black")
     }
 }
 

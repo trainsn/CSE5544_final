@@ -1,5 +1,5 @@
 body.application {
-  /*background: #f2f2f2;*/
+  /* background: #f2f2f2; */
   padding: 20px 20px 0;
 }
 body.application > .container-fluid {
@@ -40,12 +40,29 @@ path {
   opacity: 0;     
 }
 
-input{
-    position: absolute ;
-    left: 630px;
-    top: 100px;
+
+#datepicker{
+  position: absolute ;
+  left: 700;
+  top: 100px;
 }
 
+/* #hist_chart{
+  position: absolute ;
+  left: 700;
+  top: 140px;
+} */
+
+/* #ts_chart{
+  position: absolute ;
+  left: 700;
+  top: 150px;
+}  */
+
+/* #path.d3_timeseries.line{
+  fill: black,
+
+} */
 /* .content_legend_reset{
   width:1000px;
   margin:0 auto;

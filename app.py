@@ -98,10 +98,46 @@ def get_njc_geo_data():
         data_nj_geo = json.load(data_file)
     return data_nj_geo
 
+
 @app.route('/get_NYC_Taxi_data')
 def get_NYC_Taxi_data():
+    """
     df = pd.read_csv(data_path + 'sample_merged_1.csv')
-    print('original size: ', len(df), df.describe()) 
+    print('original size: ', len(df), df.describe(), df.head(5)) 
+    df = df.reset_index()
+    
+    # select attributes
+    ndf = df[['pickup_time', 'dropoff_time', 'id_taxi',
+       'pickup_long', 'pickup_lat', 'dropoff_long', 'dropoff_lat',
+       'distance', 'fare_amount', 'surcharge', 'mta_tax', 'tip_amount', 'tolls_amount',
+       'payment_type', 'passengers']]
+    
+    # remove duplicates
+    duplicates = ndf.duplicated(subset=None, keep='first')
+    print("Found {} duplicate rows".format(len(ndf[duplicates])))
+    df.drop_duplicates(subset=None, keep='first',inplace=True)
+    print('remove duplicates', len(df)) 
+
+    # remove empty cell
+    ndf.replace('', np.nan) 
+    ndf.dropna()
+    print('remove empty cell', len(ndf)) 
+
+    # remove invalid data, remove zeros
+    max_long = -70
+    min_lat = 40
+    ndf = ndf.loc[(ndf["pickup_long"]<max_long) & (ndf["dropoff_long"]<max_long) &(ndf["pickup_lat"]>min_lat) & (ndf["dropoff_lat"]>min_lat)]
+    print('remove invalid data (long, lat)', len(ndf)) 
+
+    temp = ndf.to_json(orient="index", date_format="iso", date_unit="us")
+    # df = pd.save_csv(data_path + 'sample_merged_1_processed.csv')
+    save_json(data_path+'sample_merged_1_processed', json.loads(temp))
+
+    ndf.to_csv(data_path+'sample_merged_1_processed.csv', index = False, header=True)
+    """
+    df = pd.read_csv(data_path + 'sample_merged_1_processed.csv')
+    print('processed size: ', len(df), df.describe(), df.head(5)) 
+    df = df.reset_index()
     return df.to_json(orient="index")
 
 @app.route('/get_NJC_Bike_data')
@@ -193,13 +229,6 @@ def get_NJC_Bike_data():
 
 @app.route('/post_updateMapByDate', methods = ['POST'])
 def post_updateMapByDate():
-    # if request.method == 'POST':
-    #     jsdata = request.form['data']
-    #     print('jsdata', jsdata)
-    #     return json.dumps({'status':'OK','jsdata':jsdata});
-    # else:
-    #     message = {'greeting': 'Hello from Flask!'}
-    #     return jsonify(message)
     try:
         # request_data = json.loads(request.data)#.encode('utf-8')
         # request_data = json.dumps(request_data, indent = 4)
@@ -216,13 +245,52 @@ def post_updateMapByDate():
         df.loc[:,('dropoff_time')] = pd.to_datetime(df['dropoff_time'])#.replace(tz=None)
         
         selected_data = df[df['pickup_time'].between(start, end)]
-        print( selected_data.loc[:,('pickup_lat','pickup_long','pickup_time','dropoff_time')])
         back = dict({'selected_data': selected_data.to_json(orient="index", date_format="iso")})
-        print(back)
         return back
 
     except ValueError:
         return "Error", 400
+
+
+# @app.route('/post_update_times_series',methods=['POST'])
+# def post_update_times_series():
+#     try:
+#         print('run post_update_times_series')
+#         request_data = json.loads(request.data)
+#         print('request_data', request_data)
+#         # request.form('ids')
+#         ids = request_data['ids']
+#         select_dataset = request_data['select_dataset'] 
+#         attribute = request_data['attribute'] 
+
+#         df = pd.read_csv(data_path + 'sample_merged_1.csv')
+#         ids = [int(i) for i in ids]
+#         selected_data = df.iloc[ids, :]
+#         # selected_data = selected_data.loc[:,(attribute)]
+#         back = dict({'selected_data': selected_data.to_json(orient="index", date_format="iso")})
+#         print(back)
+#         return back
+
+#     except ValueError:
+#         return "Error", 400
+
+
+# @app.route('/returned_data', methods = ['POST']) #postmethod
+# def get_post_javascript_data():
+#     try:
+#         loaded_data = json.load(request.data)
+#         print('len(selected_lat)', loaded_data)
+
+#         # for i in range(len(data)):
+#         #     # if isinstance(data[i], unicode):
+#         #     #     selected_lat[i] = data[i].encode('utf8')
+#         #     lats.append(data[i][u'lat'])
+#         #     back = dict({'labels': labels_.tolist(), 'cosine': cosine_sim.tolist()})
+#         back = dict({'data': loaded_data.tolist()})
+#         return back
+
+#     except ValueError:
+#         return "Error", 400
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0',port=8000,debug=True)

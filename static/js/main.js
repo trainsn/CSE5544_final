@@ -1,6 +1,5 @@
 
 function print(value, callback){
-    console.log(value);
     callback(null, null);
 }
 
