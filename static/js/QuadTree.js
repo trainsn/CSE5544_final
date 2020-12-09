@@ -151,24 +151,22 @@
 		return this.nodes[0] == null;
 	}
 
-	QuadNode.prototype.rangeQuery = function(rect){
-		out = []
+	QuadNode.prototype.rangeQuery = function(rect, out){
 		if (!this.bbox.intersect(rect))
-			return out;
+			return;
 
 		if (this.isLeafNode()){
 			for (var i = 0; i < this.features.length; ++i) {
     			if (rect.contain(this.features[i]))
     				out.push(this.features[i]);
 			}
-			return out;
+			return;
 		}
 		for (var i = 0; i < 4; i++){
 			if (rect.intersect(this.nodes[i].bbox)){
-				out.push.apply(out, this.nodes[i].rangeQuery(rect));
+				this.nodes[i].rangeQuery(rect, out);
 			}
 		}
-		return out;
 	} 
 
 	QuadNode.prototype.draw = function(svg){
@@ -235,7 +233,9 @@
 	}
 
 	QuadTree.prototype.rangeQuery = function(rect){
-		this.root.rangeQuery(rect);
+		out = [];
+		this.root.rangeQuery(rect, out);
+		return out;
 	}
 
 	QuadTree.prototype.draw = function(svg){
@@ -243,6 +243,7 @@
 			this.root.draw(svg);
 	}
 
+	window.Envelope = Envelope
 	window.QuadTree = QuadTree;
 
 }(window));
