@@ -151,20 +151,22 @@
 		return this.nodes[0] == null;
 	}
 
-	QuadNode.prototype.rangeQuery = function(rect, out){
+	QuadNode.prototype.rangeQuery = function(rect, out, k){
 		if (!this.bbox.intersect(rect))
 			return;
 
 		if (this.isLeafNode()){
-			for (var i = 0; i < this.features.length; ++i) {
-    			if (rect.contain(this.features[i]))
+			var counter = 0;
+			for (var i = 0; i < this.features.length * k / 20; ++i) {
+    			if (rect.contain(this.features[i])){
     				out.push(this.features[i]);
+    			}
 			}
 			return;
 		}
 		for (var i = 0; i < 4; i++){
 			if (rect.intersect(this.nodes[i].bbox)){
-				this.nodes[i].rangeQuery(rect, out);
+				this.nodes[i].rangeQuery(rect, out, k);
 			}
 		}
 	} 
@@ -232,9 +234,9 @@
 		return maxHeight.h;
 	}
 
-	QuadTree.prototype.rangeQuery = function(rect){
+	QuadTree.prototype.rangeQuery = function(rect, k){
 		out = [];
-		this.root.rangeQuery(rect, out);
+		this.root.rangeQuery(rect, out, k);
 		return out;
 	}
 

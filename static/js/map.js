@@ -154,7 +154,8 @@ function d3GeoMap(geo_data, bike_data){
     qtree.countQuadNode(nodeCounter);
     console.log("QuadTree nodes: ", nodeCounter);
 
-    draw_circles(svg_map, data_sliced, projection)
+    // draw_circles(svg_map, data_sliced, projection);
+    LOD(svg_map, qtree, projection);
 
     function zoomed() { 
         svgTransform = d3.event.transform
@@ -165,6 +166,7 @@ function d3GeoMap(geo_data, bike_data){
         svg_map.selectAll("line")
             .attr('transform', d3.event.transform)
             .attr("stroke-width", 2/d3.event.transform.k);
+        LOD(svg_map, qtree, projection);
     }
     var zoom = d3.zoom()
         .scaleExtent([0.1, 5])
@@ -226,6 +228,65 @@ function draw_circles(svg_map, data_sliced, projection){
         d.previouslySelected = false;
     });
 
+}
+
+function LOD(svg_map, qtree, projection){
+    if (svgTransform)
+        sample_rate = Math.min(20, svgTransform.k);
+    else 
+        sample_rate = 1;
+    var selectedFeatures = qtree.rangeQuery(qtree.bbox, sample_rate);
+
+    selected_data_list = []
+    for (var i = 0; i < selectedFeatures.length; i++){
+        selected_data_list.push(data_sliced[selectedFeatures[i].idx]);
+    }
+
+    svg_map.selectAll(".dropoff").remove();
+    svg_map.selectAll(".pickup").remove();
+    svg_map.selectAll(".pickup")
+        .data(selected_data_list)
+        .enter().append("circle")
+        .attr("class", "pickup")
+        .attr("r", 2)
+        .attr("cx", function(d) {
+            if (svgTransform)
+                return projection([d['pickup_long'], d['pickup_lat']])[0] * svgTransform.k + svgTransform.x;
+            else 
+                return projection([d['pickup_long'], d['pickup_lat']])[0];})
+        .attr("cy", function(d) {
+            if (svgTransform)
+                return projection([d['pickup_long'], d['pickup_lat']])[1] * svgTransform.k + svgTransform.y;
+            else
+                return projection([d['pickup_long'], d['pickup_lat']])[1];})
+        .style("fill", "blue")
+        // .on("mouseenter", function(d) {
+        //     d3.select(this)
+        //         .style("stroke-width", 1)
+        //         .style("stroke", "black")
+        // })
+       
+    svg_map.selectAll(".dropoff")
+        .data(selected_data_list)
+        .enter().append("circle")
+        .attr("class", "dropoff")
+        .attr("r", 2)
+        .attr("cx", function(d) {
+            if (svgTransform)
+                return projection([d['dropoff_long'], d['dropoff_lat']])[0] * svgTransform.k + svgTransform.x;
+            else 
+                return projection([d['dropoff_long'], d['dropoff_lat']])[0];})
+        .attr("cy", function(d) {
+            if (svgTransform)
+                return projection([d['dropoff_long'], d['dropoff_lat']])[1] * svgTransform.k + svgTransform.y;
+            else
+                return projection([d['dropoff_long'], d['dropoff_lat']])[1];})
+        .style("fill", "red")
+        // .on("mouseenter", function(d) {
+        //     d3.select(this)
+        //         .style("stroke-width", 1)
+        //         .style("stroke", "black")
+        // })
 }
 
 function updateMapByDate(start_date, end_date){
@@ -380,7 +441,7 @@ function brushed() {
         }
         
         var selectedRect = new Envelope(x0, x1, y0, y1);
-        var selectedFeatures = qtree.rangeQuery(selectedRect)
+        var selectedFeatures = qtree.rangeQuery(selectedRect, 10);
 
         selected_data_list = []
         for (var i = 0; i < selectedFeatures.length; i++){
@@ -404,6 +465,28 @@ function brushed() {
             else
                 return projection([d['pickup_long'], d['pickup_lat']])[1];})
         .style("fill", "green")
+        .style("stroke-width", 1)
+        .style("stroke", "black");
+
+        svg_map.selectAll(".dropoffSel").remove();
+        svg_map.selectAll(".dropoffSel")
+        .data(selected_data_list)
+        .enter().append("circle")
+        .attr("class", "dropoffSel")
+        .attr("r", 2)
+        .attr("cx", function(d) {
+            if (svgTransform)
+                return projection([d['dropoff_long'], d['dropoff_lat']])[0] * svgTransform.k + svgTransform.x;
+            else 
+                return projection([d['dropoff_long'], d['dropoff_lat']])[0];})
+        .attr("cy", function(d) {
+            if (svgTransform)
+                return projection([d['dropoff_long'], d['dropoff_lat']])[1] * svgTransform.k + svgTransform.y;
+            else
+                return projection([d['dropoff_long'], d['dropoff_lat']])[1];})
+        .style("fill", "yellow")
+        .style("stroke-width", 1)
+        .style("stroke", "black")
     }
 }
 
