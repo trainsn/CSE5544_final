@@ -152,7 +152,7 @@ function d3GeoMap(geo_data, bike_data){
 
     
     data_sliced = [];
-    var len = Object.keys(bike_data).length;// > 5000? 5000:Object.keys(bike_data).length
+    var len = Object.keys(bike_data).length > 2000 ? 2000:Object.keys(bike_data).length
     for (var i=0; i<len; i++){
         // data_sliced[i] = bike_data[i];
         data_sliced.push(bike_data[i]);
@@ -180,8 +180,8 @@ function d3GeoMap(geo_data, bike_data){
     qtree.countQuadNode(nodeCounter);
     console.log("QuadTree nodes: ", nodeCounter);
     
-    // draw_circles(svg_map, data_sliced, projection);
-    LOD(svg_map, qtree, projection);
+    draw_circles(svg_map, data_sliced, projection);
+    // LOD(svg_map, qtree, projection);
     
     function zoomed() { 
         svgTransform = d3.event.transform
@@ -192,7 +192,7 @@ function d3GeoMap(geo_data, bike_data){
         svg_map.selectAll("line")
             .attr('transform', d3.event.transform)
             .attr("stroke-width", 2/d3.event.transform.k);
-        LOD(svg_map, qtree, projection);
+        // LOD(svg_map, qtree, projection);
     }
 
     var zoom = d3.zoom()
@@ -208,6 +208,58 @@ function d3GeoMap(geo_data, bike_data){
         d.previouslySelected = false;
     });
     // svg_map.call(brush.extent([[0,0], [100, 100]]));  
+}
+
+function draw_circles(svg_map, data_sliced, projection){
+    svg_map.selectAll(".pickup")
+        .data(data_sliced)
+        .enter().append("circle")
+        .attr("class", "pickup")
+        .attr("r", 2)
+        .attr("cx", function(d) {
+            if (select_dataset == 'Bike'){
+                return projection([d['Start Station Longitude'], d['Start Station Latitude']])[0]; }
+            else{
+                return projection([d['pickup_long'], d['pickup_lat']])[0];}})
+        .attr("cy", function(d) {
+            if (select_dataset == 'Bike'){
+                return projection([d['Start Station Longitude'], d['Start Station Latitude']])[1]; }
+            else{
+                return projection([d['pickup_long'], d['pickup_lat']])[1];}})
+        .style("fill", "blue")
+        // .on("mouseenter", function(d) {
+        //     d3.select(this)
+        //         .style("stroke-width", 1)
+        //         .style("stroke", "black")
+        // })
+       
+    svg_map.selectAll(".dropoff")
+        .data(data_sliced)
+        .enter().append("circle")
+        .attr("class", "dropoff")
+        .attr("r", 2)
+        .attr("cx", function(d) {
+            if (select_dataset == 'Bike'){
+                return projection([d['End Station Longitude'], d['End Station Latitude']])[0]; }
+            else{
+                return projection([d['dropoff_long'], d['dropoff_lat']])[0];}})
+        .attr("cy", function(d) {
+            if (select_dataset == 'Bike'){
+                return projection([d['End Station Longitude'], d['End Station Latitude']])[1]; }
+            else{
+                return projection([d['dropoff_long'], d['dropoff_lat']])[1];}})
+        .style("fill", "red")
+        // .on("mouseenter", function(d) {
+        //     d3.select(this)
+        //         .style("stroke-width", 1)
+        //         .style("stroke", "black")
+        // })
+
+    circles = svg_map.selectAll("circle")
+    circles.nodes().forEach(function(d) {
+        d.selected = false;
+        d.previouslySelected = false;
+    });
 }
 
 function draw_selected_circles(svg_map, data_, projection){
@@ -500,11 +552,11 @@ function keyuppedEvent() {
 function brushstarted() {
    if (d3.event.sourceEvent.type !== "end") {
         d3.selectAll('.pickup').classed("pickupSel", function (d) {
-           console.log('shiftKey && d.selected', shiftKey && d.selected)
+           // console.log('shiftKey && d.selected', shiftKey && d.selected)
            return d.selected = d.previouslySelected = shiftKey && d.selected;
        });
        d3.selectAll('.dropoff').classed("dropoffSel", function (d) {
-        console.log('shiftKey && d.selected', shiftKey && d.selected)
+        // console.log('shiftKey && d.selected', shiftKey && d.selected)
         return d.selected = d.previouslySelected = shiftKey && d.selected;
     });
    }
@@ -527,7 +579,7 @@ function brushed() {
             }
         }
         var selectedRect = new Envelope(x0, x1, y0, y1);
-        var selectedFeatures = qtree.rangeQuery(selectedRect, 10);
+        var selectedFeatures = qtree.rangeQuery(selectedRect, 20);
 
         selected_data_list = []
         for (var i = 0; i < selectedFeatures.length; i++){
