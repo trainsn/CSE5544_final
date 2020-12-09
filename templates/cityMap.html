@@ -3,11 +3,14 @@
 <head>
     <meta http-equiv="content-type" content="text/html; charset=utf-8">
     <title>New York City Taxi/Bike Trips</title>
-    <!-- <link rel="stylesheet" href="./static/css/custom.css"> -->
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" type="text/css" />
+    
+    <!-- <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" type="text/css" /> -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/litepicker/dist/css/style.css"/>
     <link rel="icon" href="data:,">
-    <link href="{{ url_for('static', filename='css/custom.css') }}" rel="stylesheet" type="text/css" >
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">  
+    <link rel="stylesheet" type="text/css" href="./static/css/custom.css">
+    <link rel="stylesheet" href="https://raw.githubusercontent.com/mcaule/d3-timeseries/master/dist/d3_timeseries.min.css">
+
 </head>
 
 <body class="application">
@@ -19,21 +22,45 @@
         </div>
     </div>
 
-    <select id="selectDatasetBtn"></select>
+    <select id="selectDatasetBtn" style="position: absolute; left: 30px; top: 70px;"></select>
+    <select id="selectAttributeBtn" style="position: absolute; left: 850px; top: 70px;"></select>
+    
     <div id="map"></div>
     <div id='neighborhoodPopover'> </div>
     
     <div class="content_legend_reset">
         <div class="leftDiv1" id="legend"></div>
-        <div class="rightDiv1" style="position: absolute; left: 150px; top: 700px;">
-            <div id="selection_tips">updating</div>
-            <button type="button" id="reset_btn" style="position: relative; top: 5px;">reset</button>
+        <div class="rightDiv1" style="position: absolute; left: 160px; top: 630px;">
+            <div id="selection_tips"> </div>
+            <button type="button" id="reset_btn" style="position: relative; top: 5px;">Reset</button>
+            <button type="button" id="query_btn" style="position: relative; top: 5px;">Query</button>
+            <!-- <button type="button" id="hist_query_btn" style="position: relative; top: 5px;">Query Hist</button> -->
         </div>
     </div>
 
-    <input type="text" id="datepicker" />
-    <!-- <div id="update-nav">
-        <div id="range-selector">
+    <input type="text" id="datepicker" style="position: absolute; left: 650px; top: 70px;" />
+    <!-- <div id='timeSeriesPlot'> </div> -->
+
+    <!-- <div class="tabbable">
+        <ul class="nav nav-tabs">
+            <li class="active"><a class="ts_tab" href="#ts_tab" data-toggle="tab">time series plot</a></li>  
+            <li><a class="hist_tab" href="#hist_tab" data-toggle="tab">histogram plot</a></li>
+        </ul>
+        <div class="tab-content">
+            <div class="tab-pane active" id="ts_tab">
+                <acontent></acontent>
+            </div>
+            <div class="tab-pane" id="hist_tab">
+                <bcontent></bcontent>
+            </div>
+        </div>
+    </div> -->
+
+    <div id="ts_chart" style="position: absolute; left: 610px; top: -260px;"></div>
+    <div id="hist_chart" style="position: absolute; left: 610px; top: 120px;"></div>
+
+    <!-- <div id="update-nav"> -->
+        <!-- <div id="range-selector">
           <input type="button" id="1m" class="period ui-button" value="1m" />
           <input type="button" id="3m" class="period ui-button" value="3m"/>
           <input type="button" id="6m" class="period ui-button" value="6m"/>
@@ -55,21 +82,23 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/litepicker/dist/js/main.js"></script>
     <script type="text/javascript", src="./static/lib/js/jquery.min.js"></script>
-
+    <!--time series plot-->
+    <script src="https://mcaule.github.io/d3-timeseries/dist/d3_timeseries.min.js"></script>
+    <script src="https://mcaule.github.io/d3-timeseries/dist/create-example-data.js"></script>
+    
     <script>
         var geo_nycDataUrl = "{{ url_for('get_nyc_geo_data') }}";
         var geo_njcDataUrl = "{{ url_for('get_njc_geo_data') }}";
         var njcBikeDataUrl = "{{ url_for('get_NJC_Bike_data') }}";
         var nycTaxiDataUrl = "{{ url_for('get_NYC_Taxi_data') }}";
     </script>
+    
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     <script src="{{ url_for('static', filename='js/map.js') }}"></script>
     <script src="{{ url_for('static', filename='js/selection.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/brush_selection.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/histogram.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/time_series.js') }}"></script>
     <script src="{{ url_for('static', filename='js/QuadTree.js') }}"></script>
-    <!-- // <script type="text/javascript", src="./static/js/CirclePacking.js"></script> -->
-
-
 
 </body>
 </html>

@@ -6,7 +6,6 @@ var margin_sele = {top: 20, right: 30, bottom: 30, left: 10},
 var start_date = new Date(2013, 01, 01); 
 var end_date = new Date(2013, 01, 05);  
 
-// var allGroup = d3.map(data, function(d){return(d.name)}).keys()
 
 function dateToYMD(date) {
     var d = date.getDate();
@@ -21,6 +20,8 @@ var picker = new Litepicker({
     onSelect: function(start, end){
         console.log('select Date, from', dateToYMD(start), ' to ',dateToYMD(end));
         updateMapByDate(start, end);
+        start_date = start;
+        end_date = end;
     },
     useResetBtn: true,
     startDate: start_date,

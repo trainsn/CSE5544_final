@@ -1,5 +1,5 @@
 body.application {
-  /*background: #f2f2f2;*/
+  /* background: #f2f2f2; */
   padding: 20px 20px 0;
 }
 body.application > .container-fluid {
@@ -22,12 +22,6 @@ body.application hr {
   text-decoration: none;
 }
 
-path {
-  stroke: #fff;
-  stroke-width: 1;
-  stroke-dasharray: 1;
-}
-
 #neighborhoodPopover { 
   position: absolute;     
   text-align: center;         
@@ -40,52 +34,26 @@ path {
   opacity: 0;     
 }
 
-input{
-    position: absolute ;
-    left: 630px;
-    top: 100px;
-}
 
-/* .content_legend_reset{
-  width:1000px;
-  margin:0 auto;
-  background:#FF69B4;
-  background-color: pink !important;
-}
-.leftDiv1{
-  float:left 
-}
-.rightDiv1{
-  background:#FFC0CB;
-  height:100px;
-  margin-left:200px;
+#datepicker{
+  position: absolute ;
+  left: 700;
+  top: 100px;
+} 
+
+/* #hist_chart{
+  position: absolute ;
+  left: 700;
+  top: 140px;
+} */
+
+/* #ts_chart{
+  position: absolute ;
+  left: 700;
+  top: 150px;
 }  */
 
-/* #reset_btn{
-  position: absolute ;
-  left: 30px;
-  top: 250px;
-} */
+/* #path.d3_timeseries.line{
+  fill: black,
 
-/* .selected{
-  fill: #07fd28 ;
-}
-
-.pickup{
-  fill: blue ;
-}
-
-.dropoff{
-  fill: red ;
-}
-
-.reset_btn{
-  position: absolute ;
-  left: 30px;
-  top: 250px;
-} */
-/* #selection_tips{
-  position: absolute !important;
-  left: 30px;
-  top: 650px;
 } */
