@@ -157,7 +157,7 @@
 
 		if (this.isLeafNode()){
 			var counter = 0;
-			for (var i = 0; i < this.features.length * k / 20; ++i) {
+			for (var i = 0; i < this.features.length * k / 100; ++i) {
     			if (rect.contain(this.features[i])){
     				out.push(this.features[i]);
     			}

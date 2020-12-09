@@ -177,7 +177,7 @@ function d3GeoMap(geo_data, bike_data){
             })
         }  
     }
-    qtree = new QuadTree(70);
+    qtree = new QuadTree(100);
     qtree.constructQuadTree(pickupLoc);
     qtree.draw(svg_map);
     console.log("QuadTree height: ", qtree.countHeight());
@@ -288,7 +288,8 @@ function draw_circles(svg_map, data_sliced, projection){
             else{
                 return projection([d['pickup_long'], d['pickup_lat']])[1];}})
         .style("fill", "blue")
-
+        .style("stroke-width", 0.25)
+        .style("stroke", "black")
        
     svg_map.selectAll(".dropoff")
         .data(data_sliced)
@@ -306,11 +307,13 @@ function draw_circles(svg_map, data_sliced, projection){
             else{
                 return projection([d['dropoff_long'], d['dropoff_lat']])[1];}})
         .style("fill", "red")
+        .style("stroke-width", 0.25)
+        .style("stroke", "black")
 }
 
 function LOD(svg_map, qtree, projection){
     if (svgTransform)
-        sample_rate = Math.min(20, svgTransform.k);
+        sample_rate = Math.min(100, svgTransform.k);
     else 
         sample_rate = 1;
     var selectedFeatures = qtree.rangeQuery(qtree.bbox, sample_rate);
@@ -338,11 +341,8 @@ function LOD(svg_map, qtree, projection){
             else
                 return projection([d['pickup_long'], d['pickup_lat']])[1];})
         .style("fill", "blue")
-        .on("mouseenter", function(d) {
-            d3.select(this)
-                .style("stroke-width", .25)
-                .style("stroke", "black")
-        })
+        .style("stroke-width", 0.25)
+        .style("stroke", "black")
        
     svg_map.selectAll(".dropoff")
         .data(selected_data_list)
@@ -360,11 +360,13 @@ function LOD(svg_map, qtree, projection){
             else
                 return projection([d['dropoff_long'], d['dropoff_lat']])[1];})
         .style("fill", "red")
-        .on("mouseenter", function(d) {
-            d3.select(this)
-                .style("stroke-width", .25)
-                .style("stroke", "black")
-        })
+        .style("stroke-width", 0.25)
+        .style("stroke", "black")
+        // .on("mouseenter", function(d) {
+        //     d3.select(this)
+        //         .style("stroke-width", .25)
+        //         .style("stroke", "black")
+        // })
 }
 
 
@@ -523,7 +525,7 @@ function brushed() {
             }
         }
         var selectedRect = new Envelope(x0, x1, y0, y1);
-        var selectedFeatures = qtree.rangeQuery(selectedRect, 10);
+        var selectedFeatures = qtree.rangeQuery(selectedRect, 100);
 
         selected_data_list = []
         for (var i = 0; i < selectedFeatures.length; i++){

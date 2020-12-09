@@ -6,16 +6,16 @@ width_ts  = 500 - margin_ts.left - margin_ts.right,
 height_ts = 400 - margin_ts.top - margin_ts.bottom;
 
 var num_bins = 40;
-var attribute = 'distance';
+var attribute = 'passenger_count';
 console.log("loading ts.js")
 
-var allattributes = ['distance', 'fare_amount', 'surcharge', 'tip_amount', 'passengers']
+// var allattributes = ['distance', 'fare_amount', 'surcharge', 'tip_amount', 'passengers']
 
 var allattributes2 = ['trip_duration', 'passenger_count']
 
 d3.select("#selectAttributeBtn")
     .selectAll('AttributeOptions')
-    .data(allattributes)
+    .data(allattributes2)
     .enter().append('option')
     .text(function (d) { if(d=='distance') return 'distance (miles)'; else return d; }) 
     .attr("value", function (d) { return d; }) 

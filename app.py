@@ -187,8 +187,8 @@ def get_NYC_Taxi_data():
     ndf.to_csv(data_path+'sample_merged_1_processed_v3.csv', index = False, header=True)
 
     """
-    df = pd.read_csv(data_path + 'sample_merged_1_processed_v2.csv')
-    # df = pd.read_csv(data_path + 'sample_merged_1_processed_v3_d1d2.csv')
+    # df = pd.read_csv(data_path + 'sample_merged_1_processed_v2.csv')
+    df = pd.read_csv(data_path + 'sample_merged_1_processed_v3_d1d2.csv')
     df = df.reset_index()
     return df.to_json(orient="index")
 
