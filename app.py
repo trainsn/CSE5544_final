@@ -145,9 +145,50 @@ def get_NYC_Taxi_data():
     # save_json(data_path+'sample_merged_1_processed', json.loads(temp))
 
     ndf.to_csv(data_path+'sample_merged_1_processed_v2.csv', index = False, header=True)
+    
+    # df = pd.read_csv(data_path + 'sample_merged_1_processed_v2.csv')
+    # print('processed size: ', len(df), df.describe(), df.head(5)) 
+    # df = df.reset_index()
+
+    df = pd.read_csv(data_path + 'train.csv')
+    print('original size: ', len(df), df.describe(), df.head(5)) 
+    df = df.reset_index()
+    ndf = df[['id', 'vendor_id', 'pickup_datetime', 'dropoff_datetime', 
+       'passenger_count', 'pickup_longitude', 'pickup_latitude',
+       'dropoff_longitude', 'dropoff_latitude', 'store_and_fwd_flag', 'trip_duration']]
+    
+    # remove duplicates
+    duplicates = ndf.duplicated(subset=None, keep='first')
+    print("Found {} duplicate rows".format(len(ndf[duplicates])))
+    df.drop_duplicates(subset=None, keep='first',inplace=True)
+    print('remove duplicates', len(df)) 
+
+    # remove empty cell
+    ndf.replace('', np.nan) 
+    ndf.dropna()
+    print('remove empty cell', len(ndf)) 
+
+    # remove invalid data, remove zeros, 
+    # max_long = -70
+    # min_lat = 40
+    # ndf = ndf.loc[(ndf["pickup_long"]<max_long) & (ndf["dropoff_long"]<max_long) &(ndf["pickup_lat"]>min_lat) & (ndf["dropoff_lat"]>min_lat)]
+    # print('remove invalid data (zeros)', len(ndf)) 
+
+    # data in NY area
+    bottom_lat  = 40.535122
+    top_lat  = 40.943897
+    right_long = -73.667663
+    left_long = -74.039955
+    ndf = ndf[(left_long<ndf["pickup_longitude"]) & (ndf["pickup_longitude"]<right_long)
+        & (left_long <ndf["dropoff_longitude"]) & (ndf["dropoff_longitude"]<right_long)
+        & (bottom_lat<ndf["pickup_latitude"])   & (ndf["pickup_latitude"]  <top_lat)
+        & (bottom_lat<ndf["dropoff_latitude"])  & (ndf["dropoff_latitude"] <top_lat)]
+    print('remove invalid data (long, lat)', len(ndf)) 
+    ndf.to_csv(data_path+'sample_merged_1_processed_v3.csv', index = False, header=True)
+
     """
     df = pd.read_csv(data_path + 'sample_merged_1_processed_v2.csv')
-    print('processed size: ', len(df), df.describe(), df.head(5)) 
+    # df = pd.read_csv(data_path + 'sample_merged_1_processed_v3_d1d2.csv')
     df = df.reset_index()
     return df.to_json(orient="index")
 

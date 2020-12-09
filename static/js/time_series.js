@@ -2,7 +2,7 @@
 // where + what --> when
 
 var margin_ts = {top: 20, right: 30, bottom: 30, left: 10},
-width_ts  = 400 - margin_ts.left - margin_ts.right,
+width_ts  = 500 - margin_ts.left - margin_ts.right,
 height_ts = 400 - margin_ts.top - margin_ts.bottom;
 
 var num_bins = 40;
@@ -11,6 +11,7 @@ console.log("loading ts.js")
 
 var allattributes = ['distance', 'fare_amount', 'surcharge', 'tip_amount', 'passengers']
 
+var allattributes2 = ['trip_duration', 'passenger_count']
 
 d3.select("#selectAttributeBtn")
     .selectAll('AttributeOptions')
@@ -58,14 +59,21 @@ function update_time_series(data_){
 
     // histogram: 
     // x: time, y: num of instances
+    console.log('before st',start_date,end_date)
+    start_date = new Date(Date.UTC(start_date.getFullYear(), start_date.getMonth(), start_date.getDate(), 0, 0, 0))
+    end_date = new Date(Date.UTC(end_date.getFullYear(), end_date.getMonth(), end_date.getDate(), 0, 0, 0))
     var x = d3.scaleTime()
-        .domain([new Date(start_date),  new Date(end_date)])
-        // new Date(new Date(start_date).toUTCString());
-        // new Date(end_date)
+        .domain([start_date, end_date])
+
     var histogram = d3.histogram()
         .value(function(d, i) { 
-            d.pickup_time = new Date(new Date(d.pickup_time).toUTCString());
-            console.log(d.pickup_time)
+            year = moment(d.pickup_time).year();
+            month = moment(d.pickup_time).month();
+            date = moment(d.pickup_time).date();
+            hours = moment(d.pickup_time).hours()+5;
+            minutes = moment(d.pickup_time).minutes();
+            seconds = moment(d.pickup_time).seconds();
+            d.pickup_time = new Date(year,month,date,hours,minutes,seconds)
             return d.pickup_time; })   // I need to give the vector of value
         .domain(x.domain())  // then the domain of the graphic
         .thresholds(num_bins); // then the numbers of bins
@@ -73,8 +81,15 @@ function update_time_series(data_){
     var histData = histogram(data_);
     var hist_freq = [];
     histData.forEach(d => {
+        year = moment(d.x0).year();
+        month = moment(d.x0).month();
+        date = moment(d.x0).date();
+        hours = moment(d.x0).hours()+5;
+        minutes = moment(d.x0).minutes();
+        seconds = moment(d.x0).seconds();
+        var time = new Date(year,month,date,hours,minutes,seconds)
         hist_freq.push({
-            pickup_time: new Date(new Date(d.x0).toUTCString()),
+            pickup_time: time,
             freq: d.length
         })
     });

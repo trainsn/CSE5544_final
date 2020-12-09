@@ -15,15 +15,18 @@ function drawMap(select_data){
 
 var allDataset = ['Taxi', 'Bike']
 var select_dataset = 'Taxi';
-var data, data_sliced;
+var geo, data, data_sliced;
 var selected_data_list;
 var selected_data_where_when_list;
 var projection, svg_map, svgTransform;
 var circles;
 var qtree;
 
+var zoom; 
+
 var shiftKey;
 
+var is_LOD_on = true;
 
 drawMap(select_dataset)
 
@@ -41,37 +44,39 @@ d3.select("#selectDatasetBtn")
         console.log('select_dataset', select_dataset)
         drawMap(select_dataset)})
  
+d3.selectAll("input[name='LodOn']").on("change", function(){
+    is_LOD_on = (this.value == 'true');
+    console.log(is_LOD_on)
+    if (is_LOD_on){
+        LOD(svg_map, qtree, projection);
+    }
+    // else{
+    //     draw_circles(svg_map, data_sliced, projection);
+    // }
+
+});
+
 d3.select("#reset_btn")
     .on("click", function() {
+        // d3GeoMap(geo, data);
         svg_map.selectAll("circle").style("stroke-width", 0);
-        console.log('reset_btn clicked!')
         document.getElementById('selection_tips').innerHTML='';
-        svg_map.selectAll("circle").remove();
-        // LOD(svg_map, qtree, projection);
-        draw_circles(svg_map, data_sliced, projection);
-        circles = svg_map.selectAll("circle")
-        circles.nodes().forEach(function(d) {
-        d.selected = false;
-        d.previouslySelected = false;
-    });
-
-        // svg_map.selectAll(".dropoff")
-        //     .style("fill", "red")
+        // svg_map.selectAll("circle").remove();
         
-        // svg_map.selectAll(".dropoffSel")
-        //     .style("fill", "red")
-        //     .classed("dropoffSel", false)
-        //     .classed("dropoff", true)
-
-        // svg_map.selectAll(".pickup")
-        //     .style("fill", "blue")
-        //     .classed("pickupSel", false)
-
-        // svg_map.selectAll(".pickupSel")
-        //     .style("fill", "blue")
-        //     .classed("pickupSel", false)
-        //     .classed("pickup", false)
+        // if (is_LOD_on){
+        //     LOD(svg_map, qtree, projection);
+        // }
+        // else{
+        //     draw_circles(svg_map, data_sliced, projection);
+        // }
+        // circles = svg_map.selectAll("circle")
+        // circles.nodes().forEach(function(d) {
+        // d.selected = false;
+        // d.previouslySelected = false;
+        // });
     })
+
+
 
 
 var colors_dict = {"pickup":"blue", "dropoff":"red", 
@@ -96,6 +101,7 @@ legend.append("svg:text")
 
 
 function d3GeoMap(geo_data, bike_data){
+    geo = geo_data;
     data = bike_data;
     d3.select("#map").selectAll("*").remove();
 
@@ -181,9 +187,13 @@ function d3GeoMap(geo_data, bike_data){
     }
     qtree.countQuadNode(nodeCounter);
     console.log("QuadTree nodes: ", nodeCounter);
+    if (is_LOD_on){
+        LOD(svg_map, qtree, projection);
+    }
+    else{
+        draw_circles(svg_map, data_sliced, projection);
+    }
     
-    draw_circles(svg_map, data_sliced, projection);
-    // LOD(svg_map, qtree, projection);
     
     function zoomed() { 
         svgTransform = d3.event.transform
@@ -194,12 +204,12 @@ function d3GeoMap(geo_data, bike_data){
         svg_map.selectAll("line")
             .attr('transform', d3.event.transform)
             .attr("stroke-width", 2/d3.event.transform.k);
-        // LOD(svg_map, qtree, projection);
-        // if not LOD:
-        // else:
+        if (is_LOD_on){
+            LOD(svg_map, qtree, projection);
+        }
     }
 
-    var zoom = d3.zoom()
+    zoom = d3.zoom()
         .scaleExtent([0.1, 10])
         .on("zoom", zoomed);
     
@@ -260,6 +270,8 @@ function draw_selected_circles(svg_map, data_, projection){
 
 
 function draw_circles(svg_map, data_sliced, projection){
+    svg_map.selectAll(".dropoff").remove();
+    svg_map.selectAll(".pickup").remove();
     svg_map.selectAll(".pickup")
         .data(data_sliced)
         .enter().append("circle")
@@ -276,11 +288,7 @@ function draw_circles(svg_map, data_sliced, projection){
             else{
                 return projection([d['pickup_long'], d['pickup_lat']])[1];}})
         .style("fill", "blue")
-        // .on("mouseenter", function(d) {
-        //     d3.select(this)
-        //         .style("stroke-width", 1)
-        //         .style("stroke", "black")
-        // })
+
        
     svg_map.selectAll(".dropoff")
         .data(data_sliced)
@@ -298,18 +306,6 @@ function draw_circles(svg_map, data_sliced, projection){
             else{
                 return projection([d['dropoff_long'], d['dropoff_lat']])[1];}})
         .style("fill", "red")
-        // .on("mouseenter", function(d) {
-        //     d3.select(this)
-        //         .style("stroke-width", 1)
-        //         .style("stroke", "black")
-        // })
-
-    // circles = svg_map.selectAll("circle")
-    // circles.nodes().forEach(function(d) {
-    //     d.selected = false;
-    //     d.previouslySelected = false;
-    // });
-
 }
 
 function LOD(svg_map, qtree, projection){

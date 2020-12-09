@@ -41,6 +41,11 @@ body.application hr {
   top: 100px;
 } 
 
+/* .btn-toggle {
+  top: 50%;
+  transform: translateY(-50%);
+} */
+
 /* #hist_chart{
   position: absolute ;
   left: 700;
