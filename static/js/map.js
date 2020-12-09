@@ -395,12 +395,12 @@ function brushed() {
         .attr("r", 2)
         .attr("cx", function(d) {
             if (svgTransform)
-                return projection([d['dropoff_long'], d['dropoff_lat']])[0] * svgTransform.k + svgTransform.x;
+                return projection([d['pickup_long'], d['pickup_lat']])[0] * svgTransform.k + svgTransform.x;
             else 
                 return projection([d['pickup_long'], d['pickup_lat']])[0];})
         .attr("cy", function(d) {
             if (svgTransform)
-                return projection([d['dropoff_long'], d['dropoff_lat']])[1] * svgTransform.k + svgTransform.y;
+                return projection([d['pickup_long'], d['pickup_lat']])[1] * svgTransform.k + svgTransform.y;
             else
                 return projection([d['pickup_long'], d['pickup_lat']])[1];})
         .style("fill", "green")
