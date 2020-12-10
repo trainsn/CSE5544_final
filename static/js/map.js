@@ -50,9 +50,9 @@ d3.selectAll("input[name='LodOn']").on("change", function(){
     if (is_LOD_on){
         LOD(svg_map, qtree, projection);
     }
-    // else{
-    //     draw_circles(svg_map, data_sliced, projection);
-    // }
+    else{
+        draw_circles(svg_map, data_sliced, projection);
+    }
 
 });
 
@@ -177,7 +177,7 @@ function d3GeoMap(geo_data, bike_data){
             })
         }  
     }
-    qtree = new QuadTree(100);
+    qtree = new QuadTree(200);
     qtree.constructQuadTree(pickupLoc);
     qtree.draw(svg_map);
     console.log("QuadTree height: ", qtree.countHeight());
@@ -194,6 +194,7 @@ function d3GeoMap(geo_data, bike_data){
         draw_circles(svg_map, data_sliced, projection);
     }
     
+    // draw_circles(svg_map, data_sliced, projection);
     
     function zoomed() { 
         svgTransform = d3.event.transform
@@ -313,7 +314,7 @@ function draw_circles(svg_map, data_sliced, projection){
 
 function LOD(svg_map, qtree, projection){
     if (svgTransform)
-        sample_rate = Math.min(100, svgTransform.k);
+        sample_rate = Math.min(200, svgTransform.k);
     else 
         sample_rate = 1;
     var selectedFeatures = qtree.rangeQuery(qtree.bbox, sample_rate);
@@ -525,7 +526,7 @@ function brushed() {
             }
         }
         var selectedRect = new Envelope(x0, x1, y0, y1);
-        var selectedFeatures = qtree.rangeQuery(selectedRect, 100);
+        var selectedFeatures = qtree.rangeQuery(selectedRect, 200);
 
         selected_data_list = []
         for (var i = 0; i < selectedFeatures.length; i++){

@@ -3,8 +3,8 @@ var margin_sele = {top: 20, right: 30, bottom: 30, left: 10},
     width_sele  = 300 - margin_sele.left - margin_sele.right,
     height_sele = 300 - margin_sele.top - margin_sele.bottom;
 
-var start_date = new Date(2013, 0, 01); 
-var end_date = new Date(2013, 0, 05);  
+var start_date = new Date(2016, 0, 01); 
+var end_date = new Date(2016, 0, 05);  
 
 
 function dateToYMD(date) {

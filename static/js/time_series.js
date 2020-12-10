@@ -11,7 +11,7 @@ console.log("loading ts.js")
 
 // var allattributes = ['distance', 'fare_amount', 'surcharge', 'tip_amount', 'passengers']
 
-var allattributes2 = ['trip_duration', 'passenger_count']
+var allattributes2 = ['passenger_count','trip_duration']
 
 d3.select("#selectAttributeBtn")
     .selectAll('AttributeOptions')
@@ -25,15 +25,15 @@ d3.select("#selectAttributeBtn")
         console.log('change',d)
         attribute = d3.select(this).property("value")
         console.log('attribute', attribute)
-        update_hist(data_sliced, attribute)
+        update_hist(selected_data_where_when_list, attribute)
     })
 
 
 d3.select("#query_btn")
     .on("click", function() {
         console.log('query_btn clicked!')
-        update_time_series(data_sliced)
-        update_hist(data_sliced, attribute)
+        update_time_series(selected_data_where_when_list)
+        update_hist(selected_data_where_when_list, attribute)
     })
             
 
@@ -59,7 +59,7 @@ function update_time_series(data_){
 
     // histogram: 
     // x: time, y: num of instances
-    console.log('before st',start_date,end_date)
+    console.log('before st',start_date,end_date,data_)
     start_date = start_date.getTime() / 1000;
     end_date = end_date.getTime() / 1000;
     var x = d3.scaleLinear()
@@ -77,7 +77,7 @@ function update_time_series(data_){
             hours = moment(d.pickup_time).hours();
             minutes = moment(d.pickup_time).minutes();
             seconds = moment(d.pickup_time).seconds();
-            d.pickup_time = new Date(year,month,date,hours,minutes,seconds).getTime() / 1000;
+            d.pickup_time = new Date(year,month,date,hours,minutes,seconds).getTime() / 1000 + 5*3600;
             return d.pickup_time; })   // I need to give the vector of value
         .domain(x.domain())  // then the domain of the graphic
         .thresholds(ticks); // then the numbers of bins

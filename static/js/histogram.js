@@ -9,6 +9,7 @@ var margin_hist = {top: 10, right: 30, bottom: 30, left: 40},
 
 
 function update_hist(data_, attri){
+    console.log(data_.length)
     d3.select("#hist_chart").selectAll("*").remove();
     
     var svg_hist = d3.select("#hist_chart")

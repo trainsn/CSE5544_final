@@ -5,16 +5,15 @@
 
 (function (window) {
 
-	function Envelope(minX, maxX, minY, maxY){
+	function Envelope(minX, minY, maxX, maxY){
 		this.minX = minX;
-		this.maxX = maxX;
 		this.minY = minY;
+		this.maxX = maxX;
 		this.maxY = maxY;
 	}
 
-	Envelope.prototype.contain = function(point){
-		inside = point.x >= this.minX && point.x <= this.maxX && point.y >= this.minY && point.y <= this.maxY;
-		return inside;
+	Envelope.prototype.cotain = function(point){
+		return point.x >= minX && point.x <= maxX && point.y >= minY && point.y <= maxY;
 	} 
 
 	Envelope.prototype.intersect = function(envelope){
@@ -37,37 +36,6 @@
 		return false;
 	}
 
-	Envelope.prototype.draw = function(svg){
-		svg.append("line")  
-            .attr("x1", this.minX)
-            .attr("y1", this.minY)
-            .attr("x2", this.maxX)
-            .attr("y2", this.minY)
-            .attr("stroke", "black")
-            .attr("stroke-width", "2px");
-        svg.append("line")  
-            .attr("x1", this.maxX)
-            .attr("y1", this.minY)
-            .attr("x2", this.maxX)
-            .attr("y2", this.maxY)
-            .attr("stroke", "black")
-            .attr("stroke-width", "2px");
-        svg.append("line")  
-            .attr("x1", this.maxX)
-            .attr("y1", this.maxY)
-            .attr("x2", this.minX)
-            .attr("y2", this.maxY)
-            .attr("stroke", "black")
-            .attr("stroke-width", "2px");
-        svg.append("line")  
-            .attr("x1", this.minX)
-            .attr("y1", this.maxY)
-            .attr("x2", this.minX)
-            .attr("y2", this.minY)
-            .attr("stroke", "black")
-            .attr("stroke-width", "2px");
-	}
-
 	function QuadNode(box){
 		this.bbox = box;
 		this.nodes = new Array();
@@ -75,17 +43,17 @@
 		this.nodes[1] = null;
 		this.nodes[2] = null;
 		this.nodes[3] = null;
-		this.features = [];
 	}
 
 	QuadNode.prototype._classConstructor = QuadNode;
+	QuadNode.prototype.features = []; 
 
 	QuadNode.prototype.split = function(capacity){
 		num = this.features.length;
 		if (num <= capacity)
 			return;
 
-		for (var i = 0; i < 4; i++){
+		for (int i = 0; i < 4; i++){
 			this.nodes[i] = null;
 		}
 
@@ -100,7 +68,7 @@
 		sw = new Envelope(tMinX, tMidX, tMinY, tMidY);
 		nw = new Envelope(tMinX, tMidX, tMidY, tMaxY);
 		se = new Envelope(tMidX, tMaxX, tMinY, tMidY);
-		ne = new Envelope(tMidX, tMaxX, tMidY, tMaxY);
+		ne = new Envelope (tMidX, tMaxX, tMidY, tMaxY);
 
 		this.nodes[0] = new this._classConstructor(nw);
 		this.nodes[1] = new this._classConstructor(ne);
@@ -109,8 +77,8 @@
 
 		for (var i = 0; i < 4; i++){
 			for (var j = 0; j < this.features.length; j++){
-				if (this.nodes[i].bbox.contain(this.features[j])){
-					this.nodes[i].features.push(this.features[j]);
+				if (this.nodes[i].bbox.contain(this.features[i])){
+					this.nodes[i].features.push(this.features[i]);
 				}
 			}
 		}
@@ -133,14 +101,15 @@
 		}
 	}
 
-	QuadNode.prototype.countHeight = function(height, maxHeight){
-		if (height + 1 > maxHeight.h)
-			maxHeight.h = height + 1;
+	QuadNode.prototype.countHeight = function(height){
+		height++;
 		if (!this.isLeafNode()){
+			cur = height;
 			for (var i = 0; i < 4; i++){
-				this.nodes[i].countHeight(height + 1, maxHeight);
+				height = Math.max(height, nodes[i].countHeight(cur))
 			}
 		}
+		return height;
 	}
 
 	QuadNode.prototype.add = function(feat){
@@ -151,34 +120,24 @@
 		return this.nodes[0] == null;
 	}
 
-	QuadNode.prototype.rangeQuery = function(rect, out, k){
+	QuadNode.prototype.rangeQuery = function(rect){
+		out = []
 		if (!this.bbox.intersect(rect))
-			return;
+			return out;
 
 		if (this.isLeafNode()){
-			var counter = 0;
-			for (var i = 0; i < this.features.length * k / 200; ++i) {
-    			if (rect.contain(this.features[i])){
+			for (var i = 0; i < this.features.length; ++i) {
+    			if (rect.contain(this.features[i]))
     				out.push(this.features[i]);
-    			}
 			}
-			return;
+			return out;
 		}
 		for (var i = 0; i < 4; i++){
 			if (rect.intersect(this.nodes[i].bbox)){
-				this.nodes[i].rangeQuery(rect, out, k);
+				out.push.apply(out, this.nodes[i].rangeQuery(rect));
 			}
 		}
-	} 
-
-	QuadNode.prototype.draw = function(svg){
-		if (this.isLeafNode()){
-			this.bbox.draw(svg);
-		} 
-		else {
-			for (var i = 0; i < 4; i++)
-				this.nodes[i].draw(svg);
-		}
+		return out;
 	} 
 
 	function QuadTree(capacity){
@@ -207,45 +166,41 @@
 				tMaxY = features[i].y;
 		}
 		this.bbox = new Envelope(tMinX, tMaxX, tMinY, tMaxY);
-		this.root = new QuadNode(this.bbox);
+		this.root = new QuadTree(bbox);
 		for (var i = 0; i < features.length; i++){
 			if (this.bbox.contain(features[i])){
-				this.root.add(features[i]);
+				root.add(features[i]);
 			}
 		}
 
-		if (this.root.features.length > this.capacity)
-			this.root.split(this.capacity);
+		if (root.features.length > capacity)
+			root.split(capacity);
 
-		return true;
+		return tree;
 	}
 
-	QuadTree.prototype.countQuadNode = function(nodeCounter){
+	QuadTree.prototype.countQuadNode = function(){
+		nodeCounter = {
+			interiorNum: 0,
+			leafNum: 0;
+		}
 		if (this.root != null){
-			this.root.countNode(nodeCounter);
+			this.root.countQuadNode(nodeCounter);
 		}
 	}
 
 	QuadTree.prototype.countHeight = function(){
+		height = 0;
 		if (this.root != null){
-			maxHeight = {h: 0};
-			height = this.root.countHeight(0, maxHeight);
+			height = this.root.countHeight();
 		}
-		return maxHeight.h;
+		return height;
 	}
 
-	QuadTree.prototype.rangeQuery = function(rect, k){
-		out = [];
-		this.root.rangeQuery(rect, out, k);
-		return out;
+	QuadTree.prototype.rangeQuery = function(rect){
+		this.root.rangeQuery(rect);
 	}
 
-	QuadTree.prototype.draw = function(svg){
-		if (this.root != null)
-			this.root.draw(svg);
-	}
-
-	window.Envelope = Envelope
 	window.QuadTree = QuadTree;
 
 }(window));

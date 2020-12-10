@@ -278,7 +278,7 @@ def get_NJC_Bike_data():
 
 #     except ValueError:
 #         return "Error", 400
-
+import pdb
 @app.route('/post_updateMapByDate', methods = ['POST'])
 def post_updateMapByDate():
     try:
@@ -291,12 +291,16 @@ def post_updateMapByDate():
         select_dataset = request_data['select_dataset'] 
         
         df = pd.DataFrame.from_dict(data, orient='index')
-        start = pd.to_datetime(start).tz_localize(None) 
-        end = pd.to_datetime(end).tz_localize(None) 
-        df.loc[:,('pickup_time')] = pd.to_datetime(df['pickup_time'])#.replace(tz=None)
-        df.loc[:,('dropoff_time')] = pd.to_datetime(df['dropoff_time'])#.replace(tz=None)
-        
+        start = pd.to_datetime(start).tz_localize(None) - pd.DateOffset(hours=5)
+        end = pd.to_datetime(end).tz_localize(None)  - pd.DateOffset(hours=5)
+        df.loc[:,('pickup_time')] = pd.to_datetime(df['pickup_time']) #.replace(tz=None)
+        df.loc[:,('dropoff_time')] = pd.to_datetime(df['dropoff_time']) #.replace(tz=None)
+  
+        # pdb.set_trace()
         selected_data = df[df['pickup_time'].between(start, end)]
+        # selected_data.index = selected_data['pickup_time']
+        selected_data = selected_data.sort_values(by = 'pickup_time')
+        # print(selected_data)
         back = dict({'selected_data': selected_data.to_json(orient="index", date_format="iso")})
         return back
 
