@@ -5,7 +5,7 @@ var margin_ts = {top: 20, right: 30, bottom: 30, left: 10},
 width_ts  = 500 - margin_ts.left - margin_ts.right,
 height_ts = 400 - margin_ts.top - margin_ts.bottom;
 
-var num_bins = 40;
+var num_bins = 24;
 var attribute = 'passenger_count';
 console.log("loading ts.js")
 
@@ -25,15 +25,15 @@ d3.select("#selectAttributeBtn")
         console.log('change',d)
         attribute = d3.select(this).property("value")
         console.log('attribute', attribute)
-        update_hist(selected_data_where_when_list, attribute)
+        update_hist(data_sliced, attribute)
     })
 
 
 d3.select("#query_btn")
     .on("click", function() {
         console.log('query_btn clicked!')
-        update_time_series(selected_data_where_when_list)
-        update_hist(selected_data_where_when_list, attribute)
+        update_time_series(data_sliced)
+        update_hist(data_sliced, attribute)
     })
             
 
@@ -60,34 +60,32 @@ function update_time_series(data_){
     // histogram: 
     // x: time, y: num of instances
     console.log('before st',start_date,end_date)
-    start_date = new Date(Date.UTC(start_date.getFullYear(), start_date.getMonth(), start_date.getDate(), 0, 0, 0))
-    end_date = new Date(Date.UTC(end_date.getFullYear(), end_date.getMonth(), end_date.getDate(), 0, 0, 0))
-    var x = d3.scaleTime()
+    start_date = start_date.getTime() / 1000;
+    end_date = end_date.getTime() / 1000;
+    var x = d3.scaleLinear()
         .domain([start_date, end_date])
 
+    ticks = [];
+    for (var i = 1; i < num_bins; i++){
+        ticks.push((end_date - start_date) / num_bins * i + start_date);
+    }
     var histogram = d3.histogram()
         .value(function(d, i) { 
             year = moment(d.pickup_time).year();
             month = moment(d.pickup_time).month();
             date = moment(d.pickup_time).date();
-            hours = moment(d.pickup_time).hours()+5;
+            hours = moment(d.pickup_time).hours();
             minutes = moment(d.pickup_time).minutes();
             seconds = moment(d.pickup_time).seconds();
-            d.pickup_time = new Date(year,month,date,hours,minutes,seconds)
+            d.pickup_time = new Date(year,month,date,hours,minutes,seconds).getTime() / 1000;
             return d.pickup_time; })   // I need to give the vector of value
         .domain(x.domain())  // then the domain of the graphic
-        .thresholds(num_bins); // then the numbers of bins
+        .thresholds(ticks); // then the numbers of bins
     
     var histData = histogram(data_);
     var hist_freq = [];
     histData.forEach(d => {
-        year = moment(d.x0).year();
-        month = moment(d.x0).month();
-        date = moment(d.x0).date();
-        hours = moment(d.x0).hours()+5;
-        minutes = moment(d.x0).minutes();
-        seconds = moment(d.x0).seconds();
-        var time = new Date(year,month,date,hours,minutes,seconds)
+        var time = new Date(d.x0 * 1000)
         hist_freq.push({
             pickup_time: time,
             freq: d.length
